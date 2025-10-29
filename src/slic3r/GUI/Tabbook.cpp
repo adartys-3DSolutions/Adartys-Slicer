@@ -6,7 +6,7 @@
 #include "wxExtensions.hpp"
 #include "TabButton.hpp"
 
-//BBS set font size
+// BBS set font size
 #include "Widgets/Label.hpp"
 
 #include <wx/button.h>
@@ -15,18 +15,16 @@
 wxDEFINE_EVENT(wxCUSTOMEVT_TABBOOK_SEL_CHANGED, wxCommandEvent);
 
 const static wxColour TAB_BUTTON_BG  = wxColour("#FEFFFF");
-const static wxColour TAB_BUTTON_SEL = wxColour("#BFE1DE"); // ORCA
+const static wxColour TAB_BUTTON_SEL = wxColour("#BFE1DE"); // ADARTYS
 
 static const wxFont& TAB_BUTTON_FONT     = Label::Body_14;
 static const wxFont& TAB_BUTTON_FONT_SEL = Label::Head_14;
 
-
 static const int BUTTON_DEF_HEIGHT = 46;
 static const int BUTTON_DEF_WIDTH  = 220;
 
-
-TabButtonsListCtrl::TabButtonsListCtrl(wxWindow *parent, wxBoxSizer *side_tools) :
-    wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE | wxTAB_TRAVERSAL)
+TabButtonsListCtrl::TabButtonsListCtrl(wxWindow* parent, wxBoxSizer* side_tools)
+    : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE | wxTAB_TRAVERSAL)
 {
 #ifdef __WINDOWS__
     SetDoubleBuffered(true);
@@ -35,7 +33,7 @@ TabButtonsListCtrl::TabButtonsListCtrl(wxWindow *parent, wxBoxSizer *side_tools)
 
     int em = em_unit(this);
     // BBS: no gap
-    m_btn_margin = 0;
+    m_btn_margin  = 0;
     m_line_margin = std::lround(0.1 * em);
 
     m_arrow_img = ScalableBitmap(this, "monitor_arrow", 14);
@@ -44,9 +42,11 @@ TabButtonsListCtrl::TabButtonsListCtrl(wxWindow *parent, wxBoxSizer *side_tools)
     this->SetSizer(m_sizer);
     if (side_tools != NULL) {
         for (size_t idx = 0; idx < side_tools->GetItemCount(); idx++) {
-            wxSizerItem *item     = side_tools->GetItem(idx);
-            wxWindow *   item_win = item->GetWindow();
-            if (item_win) { item_win->Reparent(this); }
+            wxSizerItem* item     = side_tools->GetItem(idx);
+            wxWindow*    item_win = item->GetWindow();
+            if (item_win) {
+                item_win->Reparent(this);
+            }
         }
         m_sizer->Add(side_tools, 0, wxEXPAND | wxLEFT | wxTOP, m_btn_margin);
     }
@@ -56,13 +56,13 @@ TabButtonsListCtrl::TabButtonsListCtrl(wxWindow *parent, wxBoxSizer *side_tools)
     m_sizer->AddStretchSpacer(1);
 }
 
-void TabButtonsListCtrl::OnPaint(wxPaintEvent &)
+void TabButtonsListCtrl::OnPaint(wxPaintEvent&)
 {
     Slic3r::GUI::wxGetApp().UpdateDarkUI(this);
     const wxSize sz = GetSize();
-    wxPaintDC dc(this);
+    wxPaintDC    dc(this);
 
-    if (m_selection < 0 || m_selection >= (int)m_pageButtons.size())
+    if (m_selection < 0 || m_selection >= (int) m_pageButtons.size())
         return;
 
     const wxColour& btn_marker_color = Slic3r::GUI::wxGetApp().get_color_hovered_btn_label();
@@ -70,12 +70,12 @@ void TabButtonsListCtrl::OnPaint(wxPaintEvent &)
     // highlight selected notebook button
 
     for (int idx = 0; idx < int(m_pageButtons.size()); idx++) {
-        TabButton *btn = m_pageButtons[idx];
+        TabButton* btn = m_pageButtons[idx];
         btn->SetBackgroundColor(idx == m_selection ? TAB_BUTTON_SEL : TAB_BUTTON_BG);
-        
-        wxPoint pos = btn->GetPosition();
-        wxSize size = btn->GetSize();
-        const wxColour &clr  = StateColor::darkModeColorFor(idx == m_selection ? btn_marker_color : TAB_BUTTON_BG);
+
+        wxPoint         pos  = btn->GetPosition();
+        wxSize          size = btn->GetSize();
+        const wxColour& clr  = StateColor::darkModeColorFor(idx == m_selection ? btn_marker_color : TAB_BUTTON_BG);
         dc.SetPen(clr);
         dc.SetBrush(clr);
         dc.DrawRectangle(pos.x, pos.y + size.y, size.x, sz.y - size.y);
@@ -90,7 +90,7 @@ void TabButtonsListCtrl::Rescale()
     m_arrow_img = ScalableBitmap(this, "monitor_arrow", 14);
 
     int em = em_unit(this);
-    for (TabButton *btn : m_pageButtons) {
+    for (TabButton* btn : m_pageButtons) {
         btn->SetMinSize({BUTTON_DEF_WIDTH * em / 10, BUTTON_DEF_HEIGHT * em / 10});
         btn->SetBitmap(m_arrow_img);
         btn->Rescale();
@@ -119,9 +119,9 @@ void TabButtonsListCtrl::showNewTag(int sel, bool tag)
     Refresh();
 }
 
-bool TabButtonsListCtrl::InsertPage(size_t n, const wxString &text, bool bSelect /* = false*/, const std::string &bmp_name /* = ""*/)
+bool TabButtonsListCtrl::InsertPage(size_t n, const wxString& text, bool bSelect /* = false*/, const std::string& bmp_name /* = ""*/)
 {
-    TabButton *btn = new TabButton(this, text, m_arrow_img, wxNO_BORDER);
+    TabButton* btn = new TabButton(this, text, m_arrow_img, wxNO_BORDER);
     btn->SetCornerRadius(0);
 
     int em = em_unit(this);
@@ -148,8 +148,9 @@ bool TabButtonsListCtrl::InsertPage(size_t n, const wxString &text, bool bSelect
 
 void TabButtonsListCtrl::RemovePage(size_t n)
 {
-    if (n >= m_pageButtons.size()) return;
-    TabButton *btn = m_pageButtons[n];
+    if (n >= m_pageButtons.size())
+        return;
+    TabButton* btn = m_pageButtons[n];
     m_pageButtons.erase(m_pageButtons.begin() + n);
     m_buttons_sizer->Remove(n);
     btn->Reparent(nullptr);
@@ -157,7 +158,7 @@ void TabButtonsListCtrl::RemovePage(size_t n)
     m_sizer->Layout();
 }
 
-bool TabButtonsListCtrl::SetPageImage(size_t n, const std::string &bmp_name)
+bool TabButtonsListCtrl::SetPageImage(size_t n, const std::string& bmp_name)
 {
     if (n >= m_pageButtons.size())
         return false;
@@ -170,28 +171,25 @@ bool TabButtonsListCtrl::SetPageImage(size_t n, const std::string &bmp_name)
     return true;
 }
 
-void TabButtonsListCtrl::SetPageText(size_t n, const wxString &strText)
+void TabButtonsListCtrl::SetPageText(size_t n, const wxString& strText)
 {
-    TabButton *btn = m_pageButtons[n];
+    TabButton* btn = m_pageButtons[n];
     btn->SetLabel(strText);
 }
 
 wxString TabButtonsListCtrl::GetPageText(size_t n) const
 {
-    TabButton *btn = m_pageButtons[n];
+    TabButton* btn = m_pageButtons[n];
     return btn->GetLabel();
 }
 
-const wxSize& TabButtonsListCtrl::GetPaddingSize(size_t n) {
-    return m_pageButtons[n]->GetPaddingSize();
-}
+const wxSize& TabButtonsListCtrl::GetPaddingSize(size_t n) { return m_pageButtons[n]->GetPaddingSize(); }
 
-void TabButtonsListCtrl::SetPaddingSize(const wxSize& size) {
+void TabButtonsListCtrl::SetPaddingSize(const wxSize& size)
+{
     for (auto& btn : m_pageButtons) {
         btn->SetPaddingSize(size);
     }
 }
 
 //#endif // _WIN32
-
-

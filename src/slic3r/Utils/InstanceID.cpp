@@ -22,8 +22,7 @@
 #include "libslic3r/AppConfig.hpp"
 #include "libslic3r/Utils.hpp"
 
-namespace Slic3r {
-namespace instance_id {
+namespace Slic3r { namespace instance_id {
 namespace {
 
 constexpr const char* CONFIG_KEY = "updater_iid";
@@ -99,7 +98,7 @@ boost::filesystem::path storage_path()
     const std::string& base_dir = Slic3r::data_dir();
     if (base_dir.empty())
         return {};
-    return boost::filesystem::path(base_dir) / ".orcaslicer_machine_id";
+    return boost::filesystem::path(base_dir) / ".adartysslicer_machine_id";
 }
 
 std::optional<std::string> read_storage_file()
@@ -128,7 +127,7 @@ bool write_storage_file(const std::string& value)
     if (path.empty())
         return false;
 
-    const auto parent = path.parent_path();
+    const auto                parent = path.parent_path();
     boost::system::error_code ec;
     if (!parent.empty() && !boost::filesystem::exists(parent))
         boost::filesystem::create_directories(parent, ec);
@@ -146,15 +145,9 @@ bool write_storage_file(const std::string& value)
     return file.good();
 }
 
-std::optional<std::string> read_secure()
-{
-    return read_storage_file();
-}
+std::optional<std::string> read_secure() { return read_storage_file(); }
 
-bool write_secure(const std::string& value)
-{
-    return write_storage_file(value);
-}
+bool write_secure(const std::string& value) { return write_storage_file(value); }
 
 std::string generate_uuid()
 {
@@ -171,14 +164,14 @@ std::string ensure(AppConfig& config)
         return cached_iid();
 
     if (auto secure = read_secure()) {
-        cached_iid() = *secure;
+        cached_iid()  = *secure;
         cache_ready() = true;
         prune_config_value(config);
         return cached_iid();
     }
 
     if (auto from_config = read_config_value(config)) {
-        cached_iid() = *from_config;
+        cached_iid()  = *from_config;
         cache_ready() = true;
         if (!write_secure(cached_iid()))
             write_config_value(config, cached_iid());
@@ -187,7 +180,7 @@ std::string ensure(AppConfig& config)
         return cached_iid();
     }
 
-    cached_iid() = generate_uuid();
+    cached_iid()  = generate_uuid();
     cache_ready() = true;
 
     if (!write_secure(cached_iid()))
@@ -205,5 +198,4 @@ void reset_cache_for_tests()
     cache_ready() = false;
 }
 
-} // namespace instance_id
-} // namespace Slic3r
+}} // namespace Slic3r::instance_id

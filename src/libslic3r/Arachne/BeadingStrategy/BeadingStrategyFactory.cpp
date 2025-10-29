@@ -1,5 +1,5 @@
-//Copyright (c) 2022 Ultimaker B.V.
-//CuraEngine is released under the terms of the AGPLv3 or higher.
+// Copyright (c) 2022 Ultimaker B.V.
+// CuraEngine is released under the terms of the AGPLv3 or higher.
 
 #include "BeadingStrategyFactory.hpp"
 
@@ -37,14 +37,16 @@ BeadingStrategyPtr BeadingStrategyFactory::makeStrategy(const coord_t preferred_
                                                                           wall_split_middle_threshold, wall_add_middle_threshold,
                                                                           inward_distributed_center_wall_count);
 
-    BOOST_LOG_TRIVIAL(trace) << "Applying the Redistribute meta-strategy with outer-wall width = " << preferred_bead_width_outer << ", inner-wall width = " << preferred_bead_width_inner << ".";
+    BOOST_LOG_TRIVIAL(trace) << "Applying the Redistribute meta-strategy with outer-wall width = " << preferred_bead_width_outer
+                             << ", inner-wall width = " << preferred_bead_width_inner << ".";
     ret = std::make_unique<RedistributeBeadingStrategy>(preferred_bead_width_outer, minimum_variable_line_ratio, std::move(ret));
 
     if (print_thin_walls) {
-        BOOST_LOG_TRIVIAL(trace) << "Applying the Widening Beading meta-strategy with minimum input width " << min_feature_size << " and minimum output width " << min_bead_width << ".";
+        BOOST_LOG_TRIVIAL(trace) << "Applying the Widening Beading meta-strategy with minimum input width " << min_feature_size
+                                 << " and minimum output width " << min_bead_width << ".";
         ret = std::make_unique<WideningBeadingStrategy>(std::move(ret), min_feature_size, min_bead_width);
     }
-    // Orca: we allow negative outer_wall_offset here
+    // Adartys: we allow negative outer_wall_offset here
     if (outer_wall_offset != 0) {
         BOOST_LOG_TRIVIAL(trace) << "Applying the OuterWallOffset meta-strategy with offset = " << outer_wall_offset << ".";
         ret = std::make_unique<OuterWallInsetBeadingStrategy>(outer_wall_offset, std::move(ret));

@@ -1,7 +1,7 @@
 <div align="center">
 
 <picture>
-  <img alt="OrcaSlicer logo" src="resources/images/OrcaSlicer.png" width="15%" height="15%">
+  <img alt="AdartysSlicer logo" src="resources/images/AdartysSlicer.png" width="15%" height="15%">
 </picture>
 
 <a href="https://trendshift.io/repositories/952" target="_blank"><img src="https://trendshift.io/api/badge/repositories/952" alt="SoftFever%2FOrcaSlicer | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>

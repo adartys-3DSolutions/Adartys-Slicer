@@ -28,24 +28,21 @@
 namespace fs = boost::filesystem;
 namespace pt = boost::property_tree;
 
-
 namespace Slic3r {
 
-Obico::Obico(DynamicPrintConfig* config) : 
-    m_host(config->opt_string("print_host")), 
-    m_web_ui(config->opt_string("print_host_webui")),
-    m_cafile(config->opt_string("printhost_cafile")),
-    m_port(config->opt_string("printhost_port")),
-    m_apikey(config->opt_string("printhost_apikey")),
-    m_ssl_revoke_best_effort(config->opt_bool("printhost_ssl_ignore_revoke"))
+Obico::Obico(DynamicPrintConfig* config)
+    : m_host(config->opt_string("print_host"))
+    , m_web_ui(config->opt_string("print_host_webui"))
+    , m_cafile(config->opt_string("printhost_cafile"))
+    , m_port(config->opt_string("printhost_port"))
+    , m_apikey(config->opt_string("printhost_apikey"))
+    , m_ssl_revoke_best_effort(config->opt_bool("printhost_ssl_ignore_revoke"))
 {}
 
 const char* Obico::get_name() const { return "Obico"; }
 
-std::string Obico::get_host() const {
-    return m_host;
-}
-void  Obico::set_auth(Http& http) const
+std::string Obico::get_host() const { return m_host; }
+void        Obico::set_auth(Http& http) const
 {
     http.header("Authorization", "Bearer " + m_apikey);
     if (!m_cafile.empty()) {
@@ -55,7 +52,7 @@ void  Obico::set_auth(Http& http) const
 
 bool Obico::get_login_url(wxString& auth_url) const
 {
-    auth_url = make_url("o/authorize?response_type=token&client_id=OrcaSlicer&hide_navbar=true");
+    auth_url = make_url("o/authorize?response_type=token&client_id=AdartysSlicer&hide_navbar=true");
     return true;
 }
 
@@ -67,14 +64,14 @@ wxString Obico::get_test_failed_msg(wxString& msg) const
 }
 
 bool Obico::test(wxString& msg) const
-{ 
+{
     if (m_apikey.empty()) {
         return false;
     }
 
-    bool res = true;
+    bool        res  = true;
     const char* name = get_name();
-    auto url = make_url("api/v1/version/");
+    auto        url  = make_url("api/v1/version/");
 
     BOOST_LOG_TRIVIAL(info) << boost::format("%1%: Get version at: %2%") % name % url;
     // Here we do not have to add custom "Host" header - the url contains host filled by user and libCurl will set the header by itself.
@@ -86,9 +83,8 @@ bool Obico::test(wxString& msg) const
             res = false;
             msg = format_error(body, error, status);
         })
-        .on_complete([&, this](std::string body, unsigned) {
-            BOOST_LOG_TRIVIAL(debug) << boost::format("%1%: Got version: %2%") % name % body;
-        })
+        .on_complete(
+            [&, this](std::string body, unsigned) { BOOST_LOG_TRIVIAL(debug) << boost::format("%1%: Got version: %2%") % name % body; })
 #ifdef WIN32
         .ssl_revoke_best_effort(m_ssl_revoke_best_effort)
         .on_ip_resolve([&](std::string address) {
@@ -151,16 +147,14 @@ bool Obico::get_printers(wxArrayString& printers) const
     return res;
 }
 
-PrintHostPostUploadActions Obico::get_post_upload_actions() const {
-    return PrintHostPostUploadAction::StartPrint; 
-}
+PrintHostPostUploadActions Obico::get_post_upload_actions() const { return PrintHostPostUploadAction::StartPrint; }
 
 bool Obico::upload(PrintHostUpload upload_data, ProgressFn prorgess_fn, ErrorFn error_fn, InfoFn info_fn) const
-{   
-    const char* name = get_name();
+{
+    const char* name               = get_name();
     const auto  upload_filename    = upload_data.upload_path.filename();
     const auto  upload_parent_path = upload_data.upload_path.parent_path();
-    wxString test_msg;
+    wxString    test_msg;
     if (!test(test_msg)) {
         error_fn(std::move(test_msg));
         return false;
@@ -169,12 +163,12 @@ bool Obico::upload(PrintHostUpload upload_data, ProgressFn prorgess_fn, ErrorFn 
     bool res = true;
     auto url = make_url("api/v1/g_code_files/");
 
-    auto  http = Http::post(url); // std::move(url));
+    auto http = Http::post(url); // std::move(url));
     set_auth(http);
     http.form_add("print", upload_data.post_action == PrintHostPostUploadAction::StartPrint ? "true" : "false")
         .form_add("path", upload_parent_path.string()) // XXX: slashes on windows ???
         .form_add("printer_id", m_port)
-        .form_add("filename", upload_filename.string()) 
+        .form_add("filename", upload_filename.string())
         .form_add_file("file", upload_data.source_path.string(), upload_filename.string())
 
         .on_complete([&](std::string body, unsigned status) {
@@ -213,4 +207,4 @@ std::string Obico::make_url(const std::string& path) const
         return (boost::format("http://%1%/%2%") % m_host % path).str();
     }
 }
-}
+} // namespace Slic3r

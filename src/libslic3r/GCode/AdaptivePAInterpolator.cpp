@@ -1,5 +1,5 @@
 // AdaptivePAInterpolator.cpp
-// OrcaSlicer
+// AdartysSlicer
 //
 // Implementation file for the AdaptivePAInterpolator class, providing methods to parse data and perform PA interpolation.
 
@@ -14,19 +14,20 @@
  * @param data A string containing the data in CSV format (PA, flow rate, acceleration).
  * @return 0 on success, -1 on error.
  */
-int AdaptivePAInterpolator::parseAndSetData(const std::string& data) {
+int AdaptivePAInterpolator::parseAndSetData(const std::string& data)
+{
     flow_interpolators_.clear();
     accelerations_.clear();
 
     try {
-        std::istringstream ss(data);
-        std::string line;
+        std::istringstream                                       ss(data);
+        std::string                                              line;
         std::map<double, std::vector<std::pair<double, double>>> acc_to_flow_pa;
 
         while (std::getline(ss, line)) {
             std::istringstream lineStream(line);
-            std::string value;
-            double paValue, flowRate, acceleration;
+            std::string        value;
+            double             paValue, flowRate, acceleration;
             paValue = flowRate = acceleration = 0.f; // initialize all to zero.
 
             // Parse PA value
@@ -50,8 +51,8 @@ int AdaptivePAInterpolator::parseAndSetData(const std::string& data) {
 
         // Iterate through the map to set up the interpolators
         for (const auto& kv : acc_to_flow_pa) {
-            double acceleration = kv.first;
-            const auto& data = kv.second;
+            double      acceleration = kv.first;
+            const auto& data         = kv.second;
 
             std::vector<double> flowRates;
             std::vector<double> paValues;
@@ -82,14 +83,15 @@ int AdaptivePAInterpolator::parseAndSetData(const std::string& data) {
  * @param acceleration The acceleration at which to interpolate.
  * @return The interpolated PA value, or -1 if interpolation fails.
  */
-double AdaptivePAInterpolator::operator()(double flow_rate, double acceleration) {
+double AdaptivePAInterpolator::operator()(double flow_rate, double acceleration)
+{
     std::vector<double> pa_values;
     std::vector<double> acc_values;
 
     // Estimate PA value for every flow to PA model for the given flow rate
     for (const auto& kv : flow_interpolators_) {
         double pa_value = kv.second.interpolate(flow_rate);
-        
+
         // Check if the interpolated PA value is valid
         if (pa_value != -1) {
             pa_values.push_back(pa_value);

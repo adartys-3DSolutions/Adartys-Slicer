@@ -46,654 +46,679 @@
 // includes patches for multiview from
 // https://github.com/CedricGuillemet/ImGuizmo/issues/15
 
-namespace IMGUIZMO_NAMESPACE
+namespace IMGUIZMO_NAMESPACE {
+static const float ZPI              = 3.14159265358979323846f;
+static const float RAD2DEG          = (180.f / ZPI);
+static const float DEG2RAD          = (ZPI / 180.f);
+const float        screenRotateSize = 0.06f;
+// scale a bit so translate axis do not touch when in universal
+const float rotationDisplayFactor = 1.2f;
+
+static OPERATION operator&(OPERATION lhs, OPERATION rhs) { return static_cast<OPERATION>(static_cast<int>(lhs) & static_cast<int>(rhs)); }
+
+static bool operator!=(OPERATION lhs, int rhs) { return static_cast<int>(lhs) != rhs; }
+
+static bool Intersects(OPERATION lhs, OPERATION rhs) { return (lhs & rhs) != 0; }
+
+// True if lhs contains rhs
+static bool Contains(OPERATION lhs, OPERATION rhs) { return (lhs & rhs) == rhs; }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// utility and math
+
+void FPU_MatrixF_x_MatrixF(const float* a, const float* b, float* r)
 {
-   static const float ZPI = 3.14159265358979323846f;
-   static const float RAD2DEG = (180.f / ZPI);
-   static const float DEG2RAD = (ZPI / 180.f);
-   const float screenRotateSize = 0.06f;
-   // scale a bit so translate axis do not touch when in universal
-   const float rotationDisplayFactor = 1.2f;
+    r[0] = a[0] * b[0] + a[1] * b[4] + a[2] * b[8] + a[3] * b[12];
+    r[1] = a[0] * b[1] + a[1] * b[5] + a[2] * b[9] + a[3] * b[13];
+    r[2] = a[0] * b[2] + a[1] * b[6] + a[2] * b[10] + a[3] * b[14];
+    r[3] = a[0] * b[3] + a[1] * b[7] + a[2] * b[11] + a[3] * b[15];
 
-   static OPERATION operator&(OPERATION lhs, OPERATION rhs)
-   {
-     return static_cast<OPERATION>(static_cast<int>(lhs) & static_cast<int>(rhs));
-   }
+    r[4] = a[4] * b[0] + a[5] * b[4] + a[6] * b[8] + a[7] * b[12];
+    r[5] = a[4] * b[1] + a[5] * b[5] + a[6] * b[9] + a[7] * b[13];
+    r[6] = a[4] * b[2] + a[5] * b[6] + a[6] * b[10] + a[7] * b[14];
+    r[7] = a[4] * b[3] + a[5] * b[7] + a[6] * b[11] + a[7] * b[15];
 
-   static bool operator!=(OPERATION lhs, int rhs)
-   {
-     return static_cast<int>(lhs) != rhs;
-   }
+    r[8]  = a[8] * b[0] + a[9] * b[4] + a[10] * b[8] + a[11] * b[12];
+    r[9]  = a[8] * b[1] + a[9] * b[5] + a[10] * b[9] + a[11] * b[13];
+    r[10] = a[8] * b[2] + a[9] * b[6] + a[10] * b[10] + a[11] * b[14];
+    r[11] = a[8] * b[3] + a[9] * b[7] + a[10] * b[11] + a[11] * b[15];
 
-   static bool Intersects(OPERATION lhs, OPERATION rhs)
-   {
-     return (lhs & rhs) != 0;
-   }
+    r[12] = a[12] * b[0] + a[13] * b[4] + a[14] * b[8] + a[15] * b[12];
+    r[13] = a[12] * b[1] + a[13] * b[5] + a[14] * b[9] + a[15] * b[13];
+    r[14] = a[12] * b[2] + a[13] * b[6] + a[14] * b[10] + a[15] * b[14];
+    r[15] = a[12] * b[3] + a[13] * b[7] + a[14] * b[11] + a[15] * b[15];
+}
 
-   // True if lhs contains rhs
-   static bool Contains(OPERATION lhs, OPERATION rhs)
-   {
-     return (lhs & rhs) == rhs;
-   }
+void Frustum(float left, float right, float bottom, float top, float znear, float zfar, float* m16)
+{
+    float temp, temp2, temp3, temp4;
+    temp    = 2.0f * znear;
+    temp2   = right - left;
+    temp3   = top - bottom;
+    temp4   = zfar - znear;
+    m16[0]  = temp / temp2;
+    m16[1]  = 0.0;
+    m16[2]  = 0.0;
+    m16[3]  = 0.0;
+    m16[4]  = 0.0;
+    m16[5]  = temp / temp3;
+    m16[6]  = 0.0;
+    m16[7]  = 0.0;
+    m16[8]  = (right + left) / temp2;
+    m16[9]  = (top + bottom) / temp3;
+    m16[10] = (-zfar - znear) / temp4;
+    m16[11] = -1.0f;
+    m16[12] = 0.0;
+    m16[13] = 0.0;
+    m16[14] = (-temp * zfar) / temp4;
+    m16[15] = 0.0;
+}
 
-   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-   // utility and math
+void Perspective(float fovyInDegrees, float aspectRatio, float znear, float zfar, float* m16)
+{
+    float ymax, xmax;
+    ymax = znear * tanf(fovyInDegrees * DEG2RAD);
+    xmax = ymax * aspectRatio;
+    Frustum(-xmax, xmax, -ymax, ymax, znear, zfar, m16);
+}
 
-   void FPU_MatrixF_x_MatrixF(const float* a, const float* b, float* r)
-   {
-      r[0] = a[0] * b[0] + a[1] * b[4] + a[2] * b[8] + a[3] * b[12];
-      r[1] = a[0] * b[1] + a[1] * b[5] + a[2] * b[9] + a[3] * b[13];
-      r[2] = a[0] * b[2] + a[1] * b[6] + a[2] * b[10] + a[3] * b[14];
-      r[3] = a[0] * b[3] + a[1] * b[7] + a[2] * b[11] + a[3] * b[15];
+void Cross(const float* a, const float* b, float* r)
+{
+    r[0] = a[1] * b[2] - a[2] * b[1];
+    r[1] = a[2] * b[0] - a[0] * b[2];
+    r[2] = a[0] * b[1] - a[1] * b[0];
+}
 
-      r[4] = a[4] * b[0] + a[5] * b[4] + a[6] * b[8] + a[7] * b[12];
-      r[5] = a[4] * b[1] + a[5] * b[5] + a[6] * b[9] + a[7] * b[13];
-      r[6] = a[4] * b[2] + a[5] * b[6] + a[6] * b[10] + a[7] * b[14];
-      r[7] = a[4] * b[3] + a[5] * b[7] + a[6] * b[11] + a[7] * b[15];
+float Dot(const float* a, const float* b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
 
-      r[8] = a[8] * b[0] + a[9] * b[4] + a[10] * b[8] + a[11] * b[12];
-      r[9] = a[8] * b[1] + a[9] * b[5] + a[10] * b[9] + a[11] * b[13];
-      r[10] = a[8] * b[2] + a[9] * b[6] + a[10] * b[10] + a[11] * b[14];
-      r[11] = a[8] * b[3] + a[9] * b[7] + a[10] * b[11] + a[11] * b[15];
+void Normalize(const float* a, float* r)
+{
+    float il = 1.f / (sqrtf(Dot(a, a)) + FLT_EPSILON);
+    r[0]     = a[0] * il;
+    r[1]     = a[1] * il;
+    r[2]     = a[2] * il;
+}
 
-      r[12] = a[12] * b[0] + a[13] * b[4] + a[14] * b[8] + a[15] * b[12];
-      r[13] = a[12] * b[1] + a[13] * b[5] + a[14] * b[9] + a[15] * b[13];
-      r[14] = a[12] * b[2] + a[13] * b[6] + a[14] * b[10] + a[15] * b[14];
-      r[15] = a[12] * b[3] + a[13] * b[7] + a[14] * b[11] + a[15] * b[15];
-   }
+void LookAt(const float* eye, const float* at, const float* up, float* m16)
+{
+    float X[3], Y[3], Z[3], tmp[3];
 
-   void Frustum(float left, float right, float bottom, float top, float znear, float zfar, float* m16)
-   {
-      float temp, temp2, temp3, temp4;
-      temp = 2.0f * znear;
-      temp2 = right - left;
-      temp3 = top - bottom;
-      temp4 = zfar - znear;
-      m16[0] = temp / temp2;
-      m16[1] = 0.0;
-      m16[2] = 0.0;
-      m16[3] = 0.0;
-      m16[4] = 0.0;
-      m16[5] = temp / temp3;
-      m16[6] = 0.0;
-      m16[7] = 0.0;
-      m16[8] = (right + left) / temp2;
-      m16[9] = (top + bottom) / temp3;
-      m16[10] = (-zfar - znear) / temp4;
-      m16[11] = -1.0f;
-      m16[12] = 0.0;
-      m16[13] = 0.0;
-      m16[14] = (-temp * zfar) / temp4;
-      m16[15] = 0.0;
-   }
+    tmp[0] = eye[0] - at[0];
+    tmp[1] = eye[1] - at[1];
+    tmp[2] = eye[2] - at[2];
+    Normalize(tmp, Z);
+    Normalize(up, Y);
+    Cross(Y, Z, tmp);
+    Normalize(tmp, X);
+    Cross(Z, X, tmp);
+    Normalize(tmp, Y);
 
-   void Perspective(float fovyInDegrees, float aspectRatio, float znear, float zfar, float* m16)
-   {
-      float ymax, xmax;
-      ymax = znear * tanf(fovyInDegrees * DEG2RAD);
-      xmax = ymax * aspectRatio;
-      Frustum(-xmax, xmax, -ymax, ymax, znear, zfar, m16);
-   }
+    m16[0]  = X[0];
+    m16[1]  = Y[0];
+    m16[2]  = Z[0];
+    m16[3]  = 0.0f;
+    m16[4]  = X[1];
+    m16[5]  = Y[1];
+    m16[6]  = Z[1];
+    m16[7]  = 0.0f;
+    m16[8]  = X[2];
+    m16[9]  = Y[2];
+    m16[10] = Z[2];
+    m16[11] = 0.0f;
+    m16[12] = -Dot(X, eye);
+    m16[13] = -Dot(Y, eye);
+    m16[14] = -Dot(Z, eye);
+    m16[15] = 1.0f;
+}
 
-   void Cross(const float* a, const float* b, float* r)
-   {
-      r[0] = a[1] * b[2] - a[2] * b[1];
-      r[1] = a[2] * b[0] - a[0] * b[2];
-      r[2] = a[0] * b[1] - a[1] * b[0];
-   }
+template<typename T> T    Clamp(T x, T y, T z) { return ((x < y) ? y : ((x > z) ? z : x)); }
+template<typename T> T    max(T x, T y) { return (x > y) ? x : y; }
+template<typename T> T    min(T x, T y) { return (x < y) ? x : y; }
+template<typename T> bool IsWithin(T x, T y, T z) { return (x >= y) && (x <= z); }
 
-   float Dot(const float* a, const float* b)
-   {
-      return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-   }
+struct matrix_t;
+struct vec_t
+{
+public:
+    float x, y, z, w;
 
-   void Normalize(const float* a, float* r)
-   {
-      float il = 1.f / (sqrtf(Dot(a, a)) + FLT_EPSILON);
-      r[0] = a[0] * il;
-      r[1] = a[1] * il;
-      r[2] = a[2] * il;
-   }
+    void Lerp(const vec_t& v, float t)
+    {
+        x += (v.x - x) * t;
+        y += (v.y - y) * t;
+        z += (v.z - z) * t;
+        w += (v.w - w) * t;
+    }
 
-   void LookAt(const float* eye, const float* at, const float* up, float* m16)
-   {
-      float X[3], Y[3], Z[3], tmp[3];
+    void Set(float v) { x = y = z = w = v; }
+    void Set(float _x, float _y, float _z = 0.f, float _w = 0.f)
+    {
+        x = _x;
+        y = _y;
+        z = _z;
+        w = _w;
+    }
 
-      tmp[0] = eye[0] - at[0];
-      tmp[1] = eye[1] - at[1];
-      tmp[2] = eye[2] - at[2];
-      Normalize(tmp, Z);
-      Normalize(up, Y);
-      Cross(Y, Z, tmp);
-      Normalize(tmp, X);
-      Cross(Z, X, tmp);
-      Normalize(tmp, Y);
+    vec_t& operator-=(const vec_t& v)
+    {
+        x -= v.x;
+        y -= v.y;
+        z -= v.z;
+        w -= v.w;
+        return *this;
+    }
+    vec_t& operator+=(const vec_t& v)
+    {
+        x += v.x;
+        y += v.y;
+        z += v.z;
+        w += v.w;
+        return *this;
+    }
+    vec_t& operator*=(const vec_t& v)
+    {
+        x *= v.x;
+        y *= v.y;
+        z *= v.z;
+        w *= v.w;
+        return *this;
+    }
+    vec_t& operator*=(float v)
+    {
+        x *= v;
+        y *= v;
+        z *= v;
+        w *= v;
+        return *this;
+    }
 
-      m16[0] = X[0];
-      m16[1] = Y[0];
-      m16[2] = Z[0];
-      m16[3] = 0.0f;
-      m16[4] = X[1];
-      m16[5] = Y[1];
-      m16[6] = Z[1];
-      m16[7] = 0.0f;
-      m16[8] = X[2];
-      m16[9] = Y[2];
-      m16[10] = Z[2];
-      m16[11] = 0.0f;
-      m16[12] = -Dot(X, eye);
-      m16[13] = -Dot(Y, eye);
-      m16[14] = -Dot(Z, eye);
-      m16[15] = 1.0f;
-   }
+    vec_t operator*(float f) const;
+    vec_t operator-() const;
+    vec_t operator-(const vec_t& v) const;
+    vec_t operator+(const vec_t& v) const;
+    vec_t operator*(const vec_t& v) const;
 
-   template <typename T> T Clamp(T x, T y, T z) { return ((x < y) ? y : ((x > z) ? z : x)); }
-   template <typename T> T max(T x, T y) { return (x > y) ? x : y; }
-   template <typename T> T min(T x, T y) { return (x < y) ? x : y; }
-   template <typename T> bool IsWithin(T x, T y, T z) { return (x >= y) && (x <= z); }
+    const vec_t& operator+() const { return (*this); }
+    float        Length() const { return sqrtf(x * x + y * y + z * z); };
+    float        LengthSq() const { return (x * x + y * y + z * z); };
+    vec_t        Normalize()
+    {
+        (*this) *= (1.f / (Length() > FLT_EPSILON ? Length() : FLT_EPSILON));
+        return (*this);
+    }
+    vec_t Normalize(const vec_t& v)
+    {
+        this->Set(v.x, v.y, v.z, v.w);
+        this->Normalize();
+        return (*this);
+    }
+    vec_t Abs() const;
 
-   struct matrix_t;
-   struct vec_t
-   {
-   public:
-      float x, y, z, w;
+    void Cross(const vec_t& v)
+    {
+        vec_t res;
+        res.x = y * v.z - z * v.y;
+        res.y = z * v.x - x * v.z;
+        res.z = x * v.y - y * v.x;
 
-      void Lerp(const vec_t& v, float t)
-      {
-         x += (v.x - x) * t;
-         y += (v.y - y) * t;
-         z += (v.z - z) * t;
-         w += (v.w - w) * t;
-      }
+        x = res.x;
+        y = res.y;
+        z = res.z;
+        w = 0.f;
+    }
 
-      void Set(float v) { x = y = z = w = v; }
-      void Set(float _x, float _y, float _z = 0.f, float _w = 0.f) { x = _x; y = _y; z = _z; w = _w; }
+    void Cross(const vec_t& v1, const vec_t& v2)
+    {
+        x = v1.y * v2.z - v1.z * v2.y;
+        y = v1.z * v2.x - v1.x * v2.z;
+        z = v1.x * v2.y - v1.y * v2.x;
+        w = 0.f;
+    }
 
-      vec_t& operator -= (const vec_t& v) { x -= v.x; y -= v.y; z -= v.z; w -= v.w; return *this; }
-      vec_t& operator += (const vec_t& v) { x += v.x; y += v.y; z += v.z; w += v.w; return *this; }
-      vec_t& operator *= (const vec_t& v) { x *= v.x; y *= v.y; z *= v.z; w *= v.w; return *this; }
-      vec_t& operator *= (float v) { x *= v;    y *= v;    z *= v;    w *= v;    return *this; }
+    float Dot(const vec_t& v) const { return (x * v.x) + (y * v.y) + (z * v.z) + (w * v.w); }
 
-      vec_t operator * (float f) const;
-      vec_t operator - () const;
-      vec_t operator - (const vec_t& v) const;
-      vec_t operator + (const vec_t& v) const;
-      vec_t operator * (const vec_t& v) const;
+    float Dot3(const vec_t& v) const { return (x * v.x) + (y * v.y) + (z * v.z); }
 
-      const vec_t& operator + () const { return (*this); }
-      float Length() const { return sqrtf(x * x + y * y + z * z); };
-      float LengthSq() const { return (x * x + y * y + z * z); };
-      vec_t Normalize() { (*this) *= (1.f / ( Length() > FLT_EPSILON ? Length() : FLT_EPSILON ) ); return (*this); }
-      vec_t Normalize(const vec_t& v) { this->Set(v.x, v.y, v.z, v.w); this->Normalize(); return (*this); }
-      vec_t Abs() const;
+    void Transform(const matrix_t& matrix);
+    void Transform(const vec_t& s, const matrix_t& matrix);
 
-      void Cross(const vec_t& v)
-      {
-         vec_t res;
-         res.x = y * v.z - z * v.y;
-         res.y = z * v.x - x * v.z;
-         res.z = x * v.y - y * v.x;
+    void TransformVector(const matrix_t& matrix);
+    void TransformPoint(const matrix_t& matrix);
+    void TransformVector(const vec_t& v, const matrix_t& matrix)
+    {
+        (*this) = v;
+        this->TransformVector(matrix);
+    }
+    void TransformPoint(const vec_t& v, const matrix_t& matrix)
+    {
+        (*this) = v;
+        this->TransformPoint(matrix);
+    }
 
-         x = res.x;
-         y = res.y;
-         z = res.z;
-         w = 0.f;
-      }
+    float&       operator[](size_t index) { return ((float*) &x)[index]; }
+    const float& operator[](size_t index) const { return ((float*) &x)[index]; }
+    bool         operator!=(const vec_t& other) const { return memcmp(this, &other, sizeof(vec_t)) != 0; }
+};
 
-      void Cross(const vec_t& v1, const vec_t& v2)
-      {
-         x = v1.y * v2.z - v1.z * v2.y;
-         y = v1.z * v2.x - v1.x * v2.z;
-         z = v1.x * v2.y - v1.y * v2.x;
-         w = 0.f;
-      }
+vec_t makeVect(float _x, float _y, float _z = 0.f, float _w = 0.f)
+{
+    vec_t res;
+    res.x = _x;
+    res.y = _y;
+    res.z = _z;
+    res.w = _w;
+    return res;
+}
+vec_t makeVect(ImVec2 v)
+{
+    vec_t res;
+    res.x = v.x;
+    res.y = v.y;
+    res.z = 0.f;
+    res.w = 0.f;
+    return res;
+}
+vec_t vec_t::operator*(float f) const { return makeVect(x * f, y * f, z * f, w * f); }
+vec_t vec_t::operator-() const { return makeVect(-x, -y, -z, -w); }
+vec_t vec_t::operator-(const vec_t& v) const { return makeVect(x - v.x, y - v.y, z - v.z, w - v.w); }
+vec_t vec_t::operator+(const vec_t& v) const { return makeVect(x + v.x, y + v.y, z + v.z, w + v.w); }
+vec_t vec_t::operator*(const vec_t& v) const { return makeVect(x * v.x, y * v.y, z * v.z, w * v.w); }
+vec_t        vec_t::Abs() const { return makeVect(fabsf(x), fabsf(y), fabsf(z)); }
 
-      float Dot(const vec_t& v) const
-      {
-         return (x * v.x) + (y * v.y) + (z * v.z) + (w * v.w);
-      }
+vec_t Normalized(const vec_t& v)
+{
+    vec_t res;
+    res = v;
+    res.Normalize();
+    return res;
+}
+vec_t Cross(const vec_t& v1, const vec_t& v2)
+{
+    vec_t res;
+    res.x = v1.y * v2.z - v1.z * v2.y;
+    res.y = v1.z * v2.x - v1.x * v2.z;
+    res.z = v1.x * v2.y - v1.y * v2.x;
+    res.w = 0.f;
+    return res;
+}
 
-      float Dot3(const vec_t& v) const
-      {
-         return (x * v.x) + (y * v.y) + (z * v.z);
-      }
+float Dot(const vec_t& v1, const vec_t& v2) { return (v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z); }
 
-      void Transform(const matrix_t& matrix);
-      void Transform(const vec_t& s, const matrix_t& matrix);
+vec_t BuildPlan(const vec_t& p_point1, const vec_t& p_normal)
+{
+    vec_t normal, res;
+    normal.Normalize(p_normal);
+    res.w = normal.Dot(p_point1);
+    res.x = normal.x;
+    res.y = normal.y;
+    res.z = normal.z;
+    return res;
+}
 
-      void TransformVector(const matrix_t& matrix);
-      void TransformPoint(const matrix_t& matrix);
-      void TransformVector(const vec_t& v, const matrix_t& matrix) { (*this) = v; this->TransformVector(matrix); }
-      void TransformPoint(const vec_t& v, const matrix_t& matrix) { (*this) = v; this->TransformPoint(matrix); }
-
-      float& operator [] (size_t index) { return ((float*)&x)[index]; }
-      const float& operator [] (size_t index) const { return ((float*)&x)[index]; }
-      bool operator!=(const vec_t& other) const { return memcmp(this, &other, sizeof(vec_t)) != 0; }
-   };
-
-   vec_t makeVect(float _x, float _y, float _z = 0.f, float _w = 0.f) { vec_t res; res.x = _x; res.y = _y; res.z = _z; res.w = _w; return res; }
-   vec_t makeVect(ImVec2 v) { vec_t res; res.x = v.x; res.y = v.y; res.z = 0.f; res.w = 0.f; return res; }
-   vec_t vec_t::operator * (float f) const { return makeVect(x * f, y * f, z * f, w * f); }
-   vec_t vec_t::operator - () const { return makeVect(-x, -y, -z, -w); }
-   vec_t vec_t::operator - (const vec_t& v) const { return makeVect(x - v.x, y - v.y, z - v.z, w - v.w); }
-   vec_t vec_t::operator + (const vec_t& v) const { return makeVect(x + v.x, y + v.y, z + v.z, w + v.w); }
-   vec_t vec_t::operator * (const vec_t& v) const { return makeVect(x * v.x, y * v.y, z * v.z, w * v.w); }
-   vec_t vec_t::Abs() const { return makeVect(fabsf(x), fabsf(y), fabsf(z)); }
-
-   vec_t Normalized(const vec_t& v) { vec_t res; res = v; res.Normalize(); return res; }
-   vec_t Cross(const vec_t& v1, const vec_t& v2)
-   {
-      vec_t res;
-      res.x = v1.y * v2.z - v1.z * v2.y;
-      res.y = v1.z * v2.x - v1.x * v2.z;
-      res.z = v1.x * v2.y - v1.y * v2.x;
-      res.w = 0.f;
-      return res;
-   }
-
-   float Dot(const vec_t& v1, const vec_t& v2)
-   {
-      return (v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z);
-   }
-
-   vec_t BuildPlan(const vec_t& p_point1, const vec_t& p_normal)
-   {
-      vec_t normal, res;
-      normal.Normalize(p_normal);
-      res.w = normal.Dot(p_point1);
-      res.x = normal.x;
-      res.y = normal.y;
-      res.z = normal.z;
-      return res;
-   }
-
-   struct matrix_t
-   {
-   public:
-
-      union
-      {
-         float m[4][4];
-         float m16[16];
-         struct
-         {
+struct matrix_t
+{
+public:
+    union {
+        float m[4][4];
+        float m16[16];
+        struct
+        {
             vec_t right, up, dir, position;
-         } v;
-         vec_t component[4];
-      };
+        } v;
+        vec_t component[4];
+    };
 
-      operator float* () { return m16; }
-      operator const float* () const { return m16; }
-      void Translation(float _x, float _y, float _z) { this->Translation(makeVect(_x, _y, _z)); }
+         operator float*() { return m16; }
+         operator const float*() const { return m16; }
+    void Translation(float _x, float _y, float _z) { this->Translation(makeVect(_x, _y, _z)); }
 
-      void Translation(const vec_t& vt)
-      {
-         v.right.Set(1.f, 0.f, 0.f, 0.f);
-         v.up.Set(0.f, 1.f, 0.f, 0.f);
-         v.dir.Set(0.f, 0.f, 1.f, 0.f);
-         v.position.Set(vt.x, vt.y, vt.z, 1.f);
-      }
+    void Translation(const vec_t& vt)
+    {
+        v.right.Set(1.f, 0.f, 0.f, 0.f);
+        v.up.Set(0.f, 1.f, 0.f, 0.f);
+        v.dir.Set(0.f, 0.f, 1.f, 0.f);
+        v.position.Set(vt.x, vt.y, vt.z, 1.f);
+    }
 
-      void Scale(float _x, float _y, float _z)
-      {
-         v.right.Set(_x, 0.f, 0.f, 0.f);
-         v.up.Set(0.f, _y, 0.f, 0.f);
-         v.dir.Set(0.f, 0.f, _z, 0.f);
-         v.position.Set(0.f, 0.f, 0.f, 1.f);
-      }
-      void Scale(const vec_t& s) { Scale(s.x, s.y, s.z); }
+    void Scale(float _x, float _y, float _z)
+    {
+        v.right.Set(_x, 0.f, 0.f, 0.f);
+        v.up.Set(0.f, _y, 0.f, 0.f);
+        v.dir.Set(0.f, 0.f, _z, 0.f);
+        v.position.Set(0.f, 0.f, 0.f, 1.f);
+    }
+    void Scale(const vec_t& s) { Scale(s.x, s.y, s.z); }
 
-      matrix_t& operator *= (const matrix_t& mat)
-      {
-         matrix_t tmpMat;
-         tmpMat = *this;
-         tmpMat.Multiply(mat);
-         *this = tmpMat;
-         return *this;
-      }
-      matrix_t operator * (const matrix_t& mat) const
-      {
-         matrix_t matT;
-         matT.Multiply(*this, mat);
-         return matT;
-      }
+    matrix_t& operator*=(const matrix_t& mat)
+    {
+        matrix_t tmpMat;
+        tmpMat = *this;
+        tmpMat.Multiply(mat);
+        *this = tmpMat;
+        return *this;
+    }
+    matrix_t operator*(const matrix_t& mat) const
+    {
+        matrix_t matT;
+        matT.Multiply(*this, mat);
+        return matT;
+    }
 
-      void Multiply(const matrix_t& matrix)
-      {
-         matrix_t tmp;
-         tmp = *this;
+    void Multiply(const matrix_t& matrix)
+    {
+        matrix_t tmp;
+        tmp = *this;
 
-         FPU_MatrixF_x_MatrixF((float*)&tmp, (float*)&matrix, (float*)this);
-      }
+        FPU_MatrixF_x_MatrixF((float*) &tmp, (float*) &matrix, (float*) this);
+    }
 
-      void Multiply(const matrix_t& m1, const matrix_t& m2)
-      {
-         FPU_MatrixF_x_MatrixF((float*)&m1, (float*)&m2, (float*)this);
-      }
+    void Multiply(const matrix_t& m1, const matrix_t& m2) { FPU_MatrixF_x_MatrixF((float*) &m1, (float*) &m2, (float*) this); }
 
-      float GetDeterminant() const
-      {
-         return m[0][0] * m[1][1] * m[2][2] + m[0][1] * m[1][2] * m[2][0] + m[0][2] * m[1][0] * m[2][1] -
-            m[0][2] * m[1][1] * m[2][0] - m[0][1] * m[1][0] * m[2][2] - m[0][0] * m[1][2] * m[2][1];
-      }
+    float GetDeterminant() const
+    {
+        return m[0][0] * m[1][1] * m[2][2] + m[0][1] * m[1][2] * m[2][0] + m[0][2] * m[1][0] * m[2][1] - m[0][2] * m[1][1] * m[2][0] -
+               m[0][1] * m[1][0] * m[2][2] - m[0][0] * m[1][2] * m[2][1];
+    }
 
-      float Inverse(const matrix_t& srcMatrix, bool affine = false);
-      void SetToIdentity()
-      {
-         v.right.Set(1.f, 0.f, 0.f, 0.f);
-         v.up.Set(0.f, 1.f, 0.f, 0.f);
-         v.dir.Set(0.f, 0.f, 1.f, 0.f);
-         v.position.Set(0.f, 0.f, 0.f, 1.f);
-      }
-      void Transpose()
-      {
-         matrix_t tmpm;
-         for (int l = 0; l < 4; l++)
-         {
-            for (int c = 0; c < 4; c++)
-            {
-               tmpm.m[l][c] = m[c][l];
+    float Inverse(const matrix_t& srcMatrix, bool affine = false);
+    void  SetToIdentity()
+    {
+        v.right.Set(1.f, 0.f, 0.f, 0.f);
+        v.up.Set(0.f, 1.f, 0.f, 0.f);
+        v.dir.Set(0.f, 0.f, 1.f, 0.f);
+        v.position.Set(0.f, 0.f, 0.f, 1.f);
+    }
+    void Transpose()
+    {
+        matrix_t tmpm;
+        for (int l = 0; l < 4; l++) {
+            for (int c = 0; c < 4; c++) {
+                tmpm.m[l][c] = m[c][l];
             }
-         }
-         (*this) = tmpm;
-      }
+        }
+        (*this) = tmpm;
+    }
 
-      void RotationAxis(const vec_t& axis, float angle);
+    void RotationAxis(const vec_t& axis, float angle);
 
-      void OrthoNormalize()
-      {
-         v.right.Normalize();
-         v.up.Normalize();
-         v.dir.Normalize();
-      }
-   };
+    void OrthoNormalize()
+    {
+        v.right.Normalize();
+        v.up.Normalize();
+        v.dir.Normalize();
+    }
+};
 
-   void vec_t::Transform(const matrix_t& matrix)
-   {
-      vec_t out;
+void vec_t::Transform(const matrix_t& matrix)
+{
+    vec_t out;
 
-      out.x = x * matrix.m[0][0] + y * matrix.m[1][0] + z * matrix.m[2][0] + w * matrix.m[3][0];
-      out.y = x * matrix.m[0][1] + y * matrix.m[1][1] + z * matrix.m[2][1] + w * matrix.m[3][1];
-      out.z = x * matrix.m[0][2] + y * matrix.m[1][2] + z * matrix.m[2][2] + w * matrix.m[3][2];
-      out.w = x * matrix.m[0][3] + y * matrix.m[1][3] + z * matrix.m[2][3] + w * matrix.m[3][3];
+    out.x = x * matrix.m[0][0] + y * matrix.m[1][0] + z * matrix.m[2][0] + w * matrix.m[3][0];
+    out.y = x * matrix.m[0][1] + y * matrix.m[1][1] + z * matrix.m[2][1] + w * matrix.m[3][1];
+    out.z = x * matrix.m[0][2] + y * matrix.m[1][2] + z * matrix.m[2][2] + w * matrix.m[3][2];
+    out.w = x * matrix.m[0][3] + y * matrix.m[1][3] + z * matrix.m[2][3] + w * matrix.m[3][3];
 
-      x = out.x;
-      y = out.y;
-      z = out.z;
-      w = out.w;
-   }
+    x = out.x;
+    y = out.y;
+    z = out.z;
+    w = out.w;
+}
 
-   void vec_t::Transform(const vec_t& s, const matrix_t& matrix)
-   {
-      *this = s;
-      Transform(matrix);
-   }
+void vec_t::Transform(const vec_t& s, const matrix_t& matrix)
+{
+    *this = s;
+    Transform(matrix);
+}
 
-   void vec_t::TransformPoint(const matrix_t& matrix)
-   {
-      vec_t out;
+void vec_t::TransformPoint(const matrix_t& matrix)
+{
+    vec_t out;
 
-      out.x = x * matrix.m[0][0] + y * matrix.m[1][0] + z * matrix.m[2][0] + matrix.m[3][0];
-      out.y = x * matrix.m[0][1] + y * matrix.m[1][1] + z * matrix.m[2][1] + matrix.m[3][1];
-      out.z = x * matrix.m[0][2] + y * matrix.m[1][2] + z * matrix.m[2][2] + matrix.m[3][2];
-      out.w = x * matrix.m[0][3] + y * matrix.m[1][3] + z * matrix.m[2][3] + matrix.m[3][3];
+    out.x = x * matrix.m[0][0] + y * matrix.m[1][0] + z * matrix.m[2][0] + matrix.m[3][0];
+    out.y = x * matrix.m[0][1] + y * matrix.m[1][1] + z * matrix.m[2][1] + matrix.m[3][1];
+    out.z = x * matrix.m[0][2] + y * matrix.m[1][2] + z * matrix.m[2][2] + matrix.m[3][2];
+    out.w = x * matrix.m[0][3] + y * matrix.m[1][3] + z * matrix.m[2][3] + matrix.m[3][3];
 
-      x = out.x;
-      y = out.y;
-      z = out.z;
-      w = out.w;
-   }
+    x = out.x;
+    y = out.y;
+    z = out.z;
+    w = out.w;
+}
 
-   void vec_t::TransformVector(const matrix_t& matrix)
-   {
-      vec_t out;
+void vec_t::TransformVector(const matrix_t& matrix)
+{
+    vec_t out;
 
-      out.x = x * matrix.m[0][0] + y * matrix.m[1][0] + z * matrix.m[2][0];
-      out.y = x * matrix.m[0][1] + y * matrix.m[1][1] + z * matrix.m[2][1];
-      out.z = x * matrix.m[0][2] + y * matrix.m[1][2] + z * matrix.m[2][2];
-      out.w = x * matrix.m[0][3] + y * matrix.m[1][3] + z * matrix.m[2][3];
+    out.x = x * matrix.m[0][0] + y * matrix.m[1][0] + z * matrix.m[2][0];
+    out.y = x * matrix.m[0][1] + y * matrix.m[1][1] + z * matrix.m[2][1];
+    out.z = x * matrix.m[0][2] + y * matrix.m[1][2] + z * matrix.m[2][2];
+    out.w = x * matrix.m[0][3] + y * matrix.m[1][3] + z * matrix.m[2][3];
 
-      x = out.x;
-      y = out.y;
-      z = out.z;
-      w = out.w;
-   }
+    x = out.x;
+    y = out.y;
+    z = out.z;
+    w = out.w;
+}
 
-   float matrix_t::Inverse(const matrix_t& srcMatrix, bool affine)
-   {
-      float det = 0;
+float matrix_t::Inverse(const matrix_t& srcMatrix, bool affine)
+{
+    float det = 0;
 
-      if (affine)
-      {
-         det = GetDeterminant();
-         float s = 1 / det;
-         m[0][0] = (srcMatrix.m[1][1] * srcMatrix.m[2][2] - srcMatrix.m[1][2] * srcMatrix.m[2][1]) * s;
-         m[0][1] = (srcMatrix.m[2][1] * srcMatrix.m[0][2] - srcMatrix.m[2][2] * srcMatrix.m[0][1]) * s;
-         m[0][2] = (srcMatrix.m[0][1] * srcMatrix.m[1][2] - srcMatrix.m[0][2] * srcMatrix.m[1][1]) * s;
-         m[1][0] = (srcMatrix.m[1][2] * srcMatrix.m[2][0] - srcMatrix.m[1][0] * srcMatrix.m[2][2]) * s;
-         m[1][1] = (srcMatrix.m[2][2] * srcMatrix.m[0][0] - srcMatrix.m[2][0] * srcMatrix.m[0][2]) * s;
-         m[1][2] = (srcMatrix.m[0][2] * srcMatrix.m[1][0] - srcMatrix.m[0][0] * srcMatrix.m[1][2]) * s;
-         m[2][0] = (srcMatrix.m[1][0] * srcMatrix.m[2][1] - srcMatrix.m[1][1] * srcMatrix.m[2][0]) * s;
-         m[2][1] = (srcMatrix.m[2][0] * srcMatrix.m[0][1] - srcMatrix.m[2][1] * srcMatrix.m[0][0]) * s;
-         m[2][2] = (srcMatrix.m[0][0] * srcMatrix.m[1][1] - srcMatrix.m[0][1] * srcMatrix.m[1][0]) * s;
-         m[3][0] = -(m[0][0] * srcMatrix.m[3][0] + m[1][0] * srcMatrix.m[3][1] + m[2][0] * srcMatrix.m[3][2]);
-         m[3][1] = -(m[0][1] * srcMatrix.m[3][0] + m[1][1] * srcMatrix.m[3][1] + m[2][1] * srcMatrix.m[3][2]);
-         m[3][2] = -(m[0][2] * srcMatrix.m[3][0] + m[1][2] * srcMatrix.m[3][1] + m[2][2] * srcMatrix.m[3][2]);
-      }
-      else
-      {
-         // transpose matrix
-         float src[16];
-         for (int i = 0; i < 4; ++i)
-         {
-            src[i] = srcMatrix.m16[i * 4];
-            src[i + 4] = srcMatrix.m16[i * 4 + 1];
-            src[i + 8] = srcMatrix.m16[i * 4 + 2];
+    if (affine) {
+        det     = GetDeterminant();
+        float s = 1 / det;
+        m[0][0] = (srcMatrix.m[1][1] * srcMatrix.m[2][2] - srcMatrix.m[1][2] * srcMatrix.m[2][1]) * s;
+        m[0][1] = (srcMatrix.m[2][1] * srcMatrix.m[0][2] - srcMatrix.m[2][2] * srcMatrix.m[0][1]) * s;
+        m[0][2] = (srcMatrix.m[0][1] * srcMatrix.m[1][2] - srcMatrix.m[0][2] * srcMatrix.m[1][1]) * s;
+        m[1][0] = (srcMatrix.m[1][2] * srcMatrix.m[2][0] - srcMatrix.m[1][0] * srcMatrix.m[2][2]) * s;
+        m[1][1] = (srcMatrix.m[2][2] * srcMatrix.m[0][0] - srcMatrix.m[2][0] * srcMatrix.m[0][2]) * s;
+        m[1][2] = (srcMatrix.m[0][2] * srcMatrix.m[1][0] - srcMatrix.m[0][0] * srcMatrix.m[1][2]) * s;
+        m[2][0] = (srcMatrix.m[1][0] * srcMatrix.m[2][1] - srcMatrix.m[1][1] * srcMatrix.m[2][0]) * s;
+        m[2][1] = (srcMatrix.m[2][0] * srcMatrix.m[0][1] - srcMatrix.m[2][1] * srcMatrix.m[0][0]) * s;
+        m[2][2] = (srcMatrix.m[0][0] * srcMatrix.m[1][1] - srcMatrix.m[0][1] * srcMatrix.m[1][0]) * s;
+        m[3][0] = -(m[0][0] * srcMatrix.m[3][0] + m[1][0] * srcMatrix.m[3][1] + m[2][0] * srcMatrix.m[3][2]);
+        m[3][1] = -(m[0][1] * srcMatrix.m[3][0] + m[1][1] * srcMatrix.m[3][1] + m[2][1] * srcMatrix.m[3][2]);
+        m[3][2] = -(m[0][2] * srcMatrix.m[3][0] + m[1][2] * srcMatrix.m[3][1] + m[2][2] * srcMatrix.m[3][2]);
+    } else {
+        // transpose matrix
+        float src[16];
+        for (int i = 0; i < 4; ++i) {
+            src[i]      = srcMatrix.m16[i * 4];
+            src[i + 4]  = srcMatrix.m16[i * 4 + 1];
+            src[i + 8]  = srcMatrix.m16[i * 4 + 2];
             src[i + 12] = srcMatrix.m16[i * 4 + 3];
-         }
+        }
 
-         // calculate pairs for first 8 elements (cofactors)
-         float tmp[12]; // temp array for pairs
-         tmp[0] = src[10] * src[15];
-         tmp[1] = src[11] * src[14];
-         tmp[2] = src[9] * src[15];
-         tmp[3] = src[11] * src[13];
-         tmp[4] = src[9] * src[14];
-         tmp[5] = src[10] * src[13];
-         tmp[6] = src[8] * src[15];
-         tmp[7] = src[11] * src[12];
-         tmp[8] = src[8] * src[14];
-         tmp[9] = src[10] * src[12];
-         tmp[10] = src[8] * src[13];
-         tmp[11] = src[9] * src[12];
+        // calculate pairs for first 8 elements (cofactors)
+        float tmp[12]; // temp array for pairs
+        tmp[0]  = src[10] * src[15];
+        tmp[1]  = src[11] * src[14];
+        tmp[2]  = src[9] * src[15];
+        tmp[3]  = src[11] * src[13];
+        tmp[4]  = src[9] * src[14];
+        tmp[5]  = src[10] * src[13];
+        tmp[6]  = src[8] * src[15];
+        tmp[7]  = src[11] * src[12];
+        tmp[8]  = src[8] * src[14];
+        tmp[9]  = src[10] * src[12];
+        tmp[10] = src[8] * src[13];
+        tmp[11] = src[9] * src[12];
 
-         // calculate first 8 elements (cofactors)
-         m16[0] = (tmp[0] * src[5] + tmp[3] * src[6] + tmp[4] * src[7]) - (tmp[1] * src[5] + tmp[2] * src[6] + tmp[5] * src[7]);
-         m16[1] = (tmp[1] * src[4] + tmp[6] * src[6] + tmp[9] * src[7]) - (tmp[0] * src[4] + tmp[7] * src[6] + tmp[8] * src[7]);
-         m16[2] = (tmp[2] * src[4] + tmp[7] * src[5] + tmp[10] * src[7]) - (tmp[3] * src[4] + tmp[6] * src[5] + tmp[11] * src[7]);
-         m16[3] = (tmp[5] * src[4] + tmp[8] * src[5] + tmp[11] * src[6]) - (tmp[4] * src[4] + tmp[9] * src[5] + tmp[10] * src[6]);
-         m16[4] = (tmp[1] * src[1] + tmp[2] * src[2] + tmp[5] * src[3]) - (tmp[0] * src[1] + tmp[3] * src[2] + tmp[4] * src[3]);
-         m16[5] = (tmp[0] * src[0] + tmp[7] * src[2] + tmp[8] * src[3]) - (tmp[1] * src[0] + tmp[6] * src[2] + tmp[9] * src[3]);
-         m16[6] = (tmp[3] * src[0] + tmp[6] * src[1] + tmp[11] * src[3]) - (tmp[2] * src[0] + tmp[7] * src[1] + tmp[10] * src[3]);
-         m16[7] = (tmp[4] * src[0] + tmp[9] * src[1] + tmp[10] * src[2]) - (tmp[5] * src[0] + tmp[8] * src[1] + tmp[11] * src[2]);
+        // calculate first 8 elements (cofactors)
+        m16[0] = (tmp[0] * src[5] + tmp[3] * src[6] + tmp[4] * src[7]) - (tmp[1] * src[5] + tmp[2] * src[6] + tmp[5] * src[7]);
+        m16[1] = (tmp[1] * src[4] + tmp[6] * src[6] + tmp[9] * src[7]) - (tmp[0] * src[4] + tmp[7] * src[6] + tmp[8] * src[7]);
+        m16[2] = (tmp[2] * src[4] + tmp[7] * src[5] + tmp[10] * src[7]) - (tmp[3] * src[4] + tmp[6] * src[5] + tmp[11] * src[7]);
+        m16[3] = (tmp[5] * src[4] + tmp[8] * src[5] + tmp[11] * src[6]) - (tmp[4] * src[4] + tmp[9] * src[5] + tmp[10] * src[6]);
+        m16[4] = (tmp[1] * src[1] + tmp[2] * src[2] + tmp[5] * src[3]) - (tmp[0] * src[1] + tmp[3] * src[2] + tmp[4] * src[3]);
+        m16[5] = (tmp[0] * src[0] + tmp[7] * src[2] + tmp[8] * src[3]) - (tmp[1] * src[0] + tmp[6] * src[2] + tmp[9] * src[3]);
+        m16[6] = (tmp[3] * src[0] + tmp[6] * src[1] + tmp[11] * src[3]) - (tmp[2] * src[0] + tmp[7] * src[1] + tmp[10] * src[3]);
+        m16[7] = (tmp[4] * src[0] + tmp[9] * src[1] + tmp[10] * src[2]) - (tmp[5] * src[0] + tmp[8] * src[1] + tmp[11] * src[2]);
 
-         // calculate pairs for second 8 elements (cofactors)
-         tmp[0] = src[2] * src[7];
-         tmp[1] = src[3] * src[6];
-         tmp[2] = src[1] * src[7];
-         tmp[3] = src[3] * src[5];
-         tmp[4] = src[1] * src[6];
-         tmp[5] = src[2] * src[5];
-         tmp[6] = src[0] * src[7];
-         tmp[7] = src[3] * src[4];
-         tmp[8] = src[0] * src[6];
-         tmp[9] = src[2] * src[4];
-         tmp[10] = src[0] * src[5];
-         tmp[11] = src[1] * src[4];
+        // calculate pairs for second 8 elements (cofactors)
+        tmp[0]  = src[2] * src[7];
+        tmp[1]  = src[3] * src[6];
+        tmp[2]  = src[1] * src[7];
+        tmp[3]  = src[3] * src[5];
+        tmp[4]  = src[1] * src[6];
+        tmp[5]  = src[2] * src[5];
+        tmp[6]  = src[0] * src[7];
+        tmp[7]  = src[3] * src[4];
+        tmp[8]  = src[0] * src[6];
+        tmp[9]  = src[2] * src[4];
+        tmp[10] = src[0] * src[5];
+        tmp[11] = src[1] * src[4];
 
-         // calculate second 8 elements (cofactors)
-         m16[8] = (tmp[0] * src[13] + tmp[3] * src[14] + tmp[4] * src[15]) - (tmp[1] * src[13] + tmp[2] * src[14] + tmp[5] * src[15]);
-         m16[9] = (tmp[1] * src[12] + tmp[6] * src[14] + tmp[9] * src[15]) - (tmp[0] * src[12] + tmp[7] * src[14] + tmp[8] * src[15]);
-         m16[10] = (tmp[2] * src[12] + tmp[7] * src[13] + tmp[10] * src[15]) - (tmp[3] * src[12] + tmp[6] * src[13] + tmp[11] * src[15]);
-         m16[11] = (tmp[5] * src[12] + tmp[8] * src[13] + tmp[11] * src[14]) - (tmp[4] * src[12] + tmp[9] * src[13] + tmp[10] * src[14]);
-         m16[12] = (tmp[2] * src[10] + tmp[5] * src[11] + tmp[1] * src[9]) - (tmp[4] * src[11] + tmp[0] * src[9] + tmp[3] * src[10]);
-         m16[13] = (tmp[8] * src[11] + tmp[0] * src[8] + tmp[7] * src[10]) - (tmp[6] * src[10] + tmp[9] * src[11] + tmp[1] * src[8]);
-         m16[14] = (tmp[6] * src[9] + tmp[11] * src[11] + tmp[3] * src[8]) - (tmp[10] * src[11] + tmp[2] * src[8] + tmp[7] * src[9]);
-         m16[15] = (tmp[10] * src[10] + tmp[4] * src[8] + tmp[9] * src[9]) - (tmp[8] * src[9] + tmp[11] * src[10] + tmp[5] * src[8]);
+        // calculate second 8 elements (cofactors)
+        m16[8]  = (tmp[0] * src[13] + tmp[3] * src[14] + tmp[4] * src[15]) - (tmp[1] * src[13] + tmp[2] * src[14] + tmp[5] * src[15]);
+        m16[9]  = (tmp[1] * src[12] + tmp[6] * src[14] + tmp[9] * src[15]) - (tmp[0] * src[12] + tmp[7] * src[14] + tmp[8] * src[15]);
+        m16[10] = (tmp[2] * src[12] + tmp[7] * src[13] + tmp[10] * src[15]) - (tmp[3] * src[12] + tmp[6] * src[13] + tmp[11] * src[15]);
+        m16[11] = (tmp[5] * src[12] + tmp[8] * src[13] + tmp[11] * src[14]) - (tmp[4] * src[12] + tmp[9] * src[13] + tmp[10] * src[14]);
+        m16[12] = (tmp[2] * src[10] + tmp[5] * src[11] + tmp[1] * src[9]) - (tmp[4] * src[11] + tmp[0] * src[9] + tmp[3] * src[10]);
+        m16[13] = (tmp[8] * src[11] + tmp[0] * src[8] + tmp[7] * src[10]) - (tmp[6] * src[10] + tmp[9] * src[11] + tmp[1] * src[8]);
+        m16[14] = (tmp[6] * src[9] + tmp[11] * src[11] + tmp[3] * src[8]) - (tmp[10] * src[11] + tmp[2] * src[8] + tmp[7] * src[9]);
+        m16[15] = (tmp[10] * src[10] + tmp[4] * src[8] + tmp[9] * src[9]) - (tmp[8] * src[9] + tmp[11] * src[10] + tmp[5] * src[8]);
 
-         // calculate determinant
-         det = src[0] * m16[0] + src[1] * m16[1] + src[2] * m16[2] + src[3] * m16[3];
+        // calculate determinant
+        det = src[0] * m16[0] + src[1] * m16[1] + src[2] * m16[2] + src[3] * m16[3];
 
-         // calculate matrix inverse
-         float invdet = 1 / det;
-         for (int j = 0; j < 16; ++j)
-         {
+        // calculate matrix inverse
+        float invdet = 1 / det;
+        for (int j = 0; j < 16; ++j) {
             m16[j] *= invdet;
-         }
-      }
+        }
+    }
 
-      return det;
-   }
+    return det;
+}
 
-   void matrix_t::RotationAxis(const vec_t& axis, float angle)
-   {
-      float length2 = axis.LengthSq();
-      if (length2 < FLT_EPSILON)
-      {
-         SetToIdentity();
-         return;
-      }
+void matrix_t::RotationAxis(const vec_t& axis, float angle)
+{
+    float length2 = axis.LengthSq();
+    if (length2 < FLT_EPSILON) {
+        SetToIdentity();
+        return;
+    }
 
-      vec_t n = axis * (1.f / sqrtf(length2));
-      float s = sinf(angle);
-      float c = cosf(angle);
-      float k = 1.f - c;
+    vec_t n = axis * (1.f / sqrtf(length2));
+    float s = sinf(angle);
+    float c = cosf(angle);
+    float k = 1.f - c;
 
-      float xx = n.x * n.x * k + c;
-      float yy = n.y * n.y * k + c;
-      float zz = n.z * n.z * k + c;
-      float xy = n.x * n.y * k;
-      float yz = n.y * n.z * k;
-      float zx = n.z * n.x * k;
-      float xs = n.x * s;
-      float ys = n.y * s;
-      float zs = n.z * s;
+    float xx = n.x * n.x * k + c;
+    float yy = n.y * n.y * k + c;
+    float zz = n.z * n.z * k + c;
+    float xy = n.x * n.y * k;
+    float yz = n.y * n.z * k;
+    float zx = n.z * n.x * k;
+    float xs = n.x * s;
+    float ys = n.y * s;
+    float zs = n.z * s;
 
-      m[0][0] = xx;
-      m[0][1] = xy + zs;
-      m[0][2] = zx - ys;
-      m[0][3] = 0.f;
-      m[1][0] = xy - zs;
-      m[1][1] = yy;
-      m[1][2] = yz + xs;
-      m[1][3] = 0.f;
-      m[2][0] = zx + ys;
-      m[2][1] = yz - xs;
-      m[2][2] = zz;
-      m[2][3] = 0.f;
-      m[3][0] = 0.f;
-      m[3][1] = 0.f;
-      m[3][2] = 0.f;
-      m[3][3] = 1.f;
-   }
+    m[0][0] = xx;
+    m[0][1] = xy + zs;
+    m[0][2] = zx - ys;
+    m[0][3] = 0.f;
+    m[1][0] = xy - zs;
+    m[1][1] = yy;
+    m[1][2] = yz + xs;
+    m[1][3] = 0.f;
+    m[2][0] = zx + ys;
+    m[2][1] = yz - xs;
+    m[2][2] = zz;
+    m[2][3] = 0.f;
+    m[3][0] = 0.f;
+    m[3][1] = 0.f;
+    m[3][2] = 0.f;
+    m[3][3] = 1.f;
+}
 
-   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-   //
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 
-   enum MOVETYPE
-   {
-      MT_NONE,
-      MT_MOVE_X,
-      MT_MOVE_Y,
-      MT_MOVE_Z,
-      MT_MOVE_YZ,
-      MT_MOVE_ZX,
-      MT_MOVE_XY,
-      MT_MOVE_SCREEN,
-      MT_ROTATE_X,
-      MT_ROTATE_Y,
-      MT_ROTATE_Z,
-      MT_ROTATE_SCREEN,
-      MT_SCALE_X,
-      MT_SCALE_Y,
-      MT_SCALE_Z,
-      MT_SCALE_XYZ
-   };
+enum MOVETYPE {
+    MT_NONE,
+    MT_MOVE_X,
+    MT_MOVE_Y,
+    MT_MOVE_Z,
+    MT_MOVE_YZ,
+    MT_MOVE_ZX,
+    MT_MOVE_XY,
+    MT_MOVE_SCREEN,
+    MT_ROTATE_X,
+    MT_ROTATE_Y,
+    MT_ROTATE_Z,
+    MT_ROTATE_SCREEN,
+    MT_SCALE_X,
+    MT_SCALE_Y,
+    MT_SCALE_Z,
+    MT_SCALE_XYZ
+};
 
-   static bool IsTranslateType(int type)
-   {
-     return type >= MT_MOVE_X && type <= MT_MOVE_SCREEN;
-   }
+static bool IsTranslateType(int type) { return type >= MT_MOVE_X && type <= MT_MOVE_SCREEN; }
 
-   static bool IsRotateType(int type)
-   {
-     return type >= MT_ROTATE_X && type <= MT_ROTATE_SCREEN;
-   }
+static bool IsRotateType(int type) { return type >= MT_ROTATE_X && type <= MT_ROTATE_SCREEN; }
 
-   static bool IsScaleType(int type)
-   {
-     return type >= MT_SCALE_X && type <= MT_SCALE_XYZ;
-   }
+static bool IsScaleType(int type) { return type >= MT_SCALE_X && type <= MT_SCALE_XYZ; }
 
-   // Matches MT_MOVE_AB order
-   static const OPERATION TRANSLATE_PLANS[3] = { TRANSLATE_Y | TRANSLATE_Z, TRANSLATE_X | TRANSLATE_Z, TRANSLATE_X | TRANSLATE_Y };
+// Matches MT_MOVE_AB order
+static const OPERATION TRANSLATE_PLANS[3] = {TRANSLATE_Y | TRANSLATE_Z, TRANSLATE_X | TRANSLATE_Z, TRANSLATE_X | TRANSLATE_Y};
 
-   Style::Style()
-   {
-      // default values
-      TranslationLineThickness   = 3.0f;
-      TranslationLineArrowSize   = 6.0f;
-      RotationLineThickness      = 2.0f;
-      RotationOuterLineThickness = 3.0f;
-      ScaleLineThickness         = 3.0f;
-      ScaleLineCircleSize        = 6.0f;
-      HatchedAxisLineThickness   = 6.0f;
-      CenterCircleSize           = 6.0f;
+Style::Style()
+{
+    // default values
+    TranslationLineThickness   = 3.0f;
+    TranslationLineArrowSize   = 6.0f;
+    RotationLineThickness      = 2.0f;
+    RotationOuterLineThickness = 3.0f;
+    ScaleLineThickness         = 3.0f;
+    ScaleLineCircleSize        = 6.0f;
+    HatchedAxisLineThickness   = 6.0f;
+    CenterCircleSize           = 6.0f;
 
-      // initialize default colors
-      Colors[DIRECTION_X]           = ImVec4(0.666f, 0.000f, 0.000f, 1.000f);
-      Colors[DIRECTION_Y]           = ImVec4(0.000f, 0.666f, 0.000f, 1.000f);
-      Colors[DIRECTION_Z]           = ImVec4(0.000f, 0.000f, 0.666f, 1.000f);
-      Colors[PLANE_X]               = ImVec4(0.666f, 0.000f, 0.000f, 0.380f);
-      Colors[PLANE_Y]               = ImVec4(0.000f, 0.666f, 0.000f, 0.380f);
-      Colors[PLANE_Z]               = ImVec4(0.000f, 0.000f, 0.666f, 0.380f);
-      Colors[SELECTION]             = ImVec4(1.000f, 0.500f, 0.062f, 0.541f);
-      Colors[INACTIVE]              = ImVec4(0.600f, 0.600f, 0.600f, 0.600f);
-      Colors[TRANSLATION_LINE]      = ImVec4(0.666f, 0.666f, 0.666f, 0.666f);
-      Colors[SCALE_LINE]            = ImVec4(0.250f, 0.250f, 0.250f, 1.000f);
-      Colors[ROTATION_USING_BORDER] = ImVec4(1.000f, 0.500f, 0.062f, 1.000f);
-      Colors[ROTATION_USING_FILL]   = ImVec4(1.000f, 0.500f, 0.062f, 0.500f);
-      Colors[HATCHED_AXIS_LINES]    = ImVec4(0.000f, 0.000f, 0.000f, 0.500f);
-      Colors[TEXT]                  = ImVec4(1.000f, 1.000f, 1.000f, 1.000f);
-      Colors[TEXT_SHADOW]           = ImVec4(0.000f, 0.000f, 0.000f, 1.000f);
-      Colors[FACE]                  = ImVec4(0.776f, 0.804f, 0.839f, 1.000f);
+    // initialize default colors
+    Colors[DIRECTION_X]           = ImVec4(0.666f, 0.000f, 0.000f, 1.000f);
+    Colors[DIRECTION_Y]           = ImVec4(0.000f, 0.666f, 0.000f, 1.000f);
+    Colors[DIRECTION_Z]           = ImVec4(0.000f, 0.000f, 0.666f, 1.000f);
+    Colors[PLANE_X]               = ImVec4(0.666f, 0.000f, 0.000f, 0.380f);
+    Colors[PLANE_Y]               = ImVec4(0.000f, 0.666f, 0.000f, 0.380f);
+    Colors[PLANE_Z]               = ImVec4(0.000f, 0.000f, 0.666f, 0.380f);
+    Colors[SELECTION]             = ImVec4(1.000f, 0.500f, 0.062f, 0.541f);
+    Colors[INACTIVE]              = ImVec4(0.600f, 0.600f, 0.600f, 0.600f);
+    Colors[TRANSLATION_LINE]      = ImVec4(0.666f, 0.666f, 0.666f, 0.666f);
+    Colors[SCALE_LINE]            = ImVec4(0.250f, 0.250f, 0.250f, 1.000f);
+    Colors[ROTATION_USING_BORDER] = ImVec4(1.000f, 0.500f, 0.062f, 1.000f);
+    Colors[ROTATION_USING_FILL]   = ImVec4(1.000f, 0.500f, 0.062f, 0.500f);
+    Colors[HATCHED_AXIS_LINES]    = ImVec4(0.000f, 0.000f, 0.000f, 0.500f);
+    Colors[TEXT]                  = ImVec4(1.000f, 1.000f, 1.000f, 1.000f);
+    Colors[TEXT_SHADOW]           = ImVec4(0.000f, 0.000f, 0.000f, 1.000f);
+    Colors[FACE]                  = ImVec4(0.776f, 0.804f, 0.839f, 1.000f);
 
-      strcpy(AxisLabels[Axis_X], "x");
-      strcpy(AxisLabels[Axis_Y], "y");
-      strcpy(AxisLabels[Axis_Z], "z");
+    strcpy(AxisLabels[Axis_X], "x");
+    strcpy(AxisLabels[Axis_Y], "y");
+    strcpy(AxisLabels[Axis_Z], "z");
 
-      strcpy(FaceLabels[FACE_BACK], "back");
-      strcpy(FaceLabels[FACE_TOP], "top");
-      strcpy(FaceLabels[FACE_RIGHT], "right");
-      strcpy(FaceLabels[FACE_FRONT], "front");
-      strcpy(FaceLabels[FACE_BOTTOM], "bottom");
-      strcpy(FaceLabels[FACE_LEFT], "left");
-   }
+    strcpy(FaceLabels[FACE_BACK], "back");
+    strcpy(FaceLabels[FACE_TOP], "top");
+    strcpy(FaceLabels[FACE_RIGHT], "right");
+    strcpy(FaceLabels[FACE_FRONT], "front");
+    strcpy(FaceLabels[FACE_BOTTOM], "bottom");
+    strcpy(FaceLabels[FACE_LEFT], "left");
+}
 
-   struct Context
-   {
+struct Context
+{
 #if 0
       Context() : mbUsing(false), mbEnable(true), mbUsingBounds(false)
       {
       }
 #endif
-      ImDrawList* mDrawList;
-      Style mStyle;
+    ImDrawList* mDrawList;
+    Style       mStyle;
 #if 0
       MODE mMode;
 #endif
-      matrix_t mViewMat;
-      matrix_t mProjectionMat;
+    matrix_t mViewMat;
+    matrix_t mProjectionMat;
 #if 0
       matrix_t mModel;
       matrix_t mModelLocal; // orthonormalized model
@@ -710,8 +735,8 @@ namespace IMGUIZMO_NAMESPACE
       vec_t mCameraDir;
       vec_t mCameraUp;
 #endif
-      vec_t mRayOrigin;
-      vec_t mRayVector;
+    vec_t mRayOrigin;
+    vec_t mRayVector;
 #if 0
       float  mRadiusSquareCenter;
       ImVec2 mScreenSquareCenter;
@@ -724,8 +749,8 @@ namespace IMGUIZMO_NAMESPACE
       bool mbUsing;
       bool mbEnable;
 #endif
-      bool mbMouseOver;
-      bool mReversed; // reversed projection matrix
+    bool mbMouseOver;
+    bool mReversed; // reversed projection matrix
 #if 0
       // translation
       vec_t mTranslationPlan;
@@ -783,11 +808,11 @@ namespace IMGUIZMO_NAMESPACE
       bool mAllowAxisFlip = true;
       float mGizmoSizeClipSpace = 0.1f;
 #endif
-   };
+};
 
-   static Context gContext;
+static Context gContext;
 
-   static const vec_t directionUnary[3] = { makeVect(1.f, 0.f, 0.f), makeVect(0.f, 1.f, 0.f), makeVect(0.f, 0.f, 1.f) };
+static const vec_t directionUnary[3] = {makeVect(1.f, 0.f, 0.f), makeVect(0.f, 1.f, 0.f), makeVect(0.f, 0.f, 1.f)};
 #if 0
    static const char* translationInfoMask[] = { "X : %5.3f", "Y : %5.3f", "Z : %5.3f",
       "Y : %5.3f Z : %5.3f", "X : %5.3f Z : %5.3f", "X : %5.3f Y : %5.3f",
@@ -807,51 +832,48 @@ namespace IMGUIZMO_NAMESPACE
    static int GetRotateType(OPERATION op);
    static int GetScaleType(OPERATION op);
 #endif
-   Style& GetStyle()
-   {
-      return gContext.mStyle;
-   }
+Style& GetStyle() { return gContext.mStyle; }
 
-   static ImU32 GetColorU32(int idx)
-   {
-      IM_ASSERT(idx < COLOR::COUNT);
-      return ImGui::ColorConvertFloat4ToU32(gContext.mStyle.Colors[idx]);
-   }
+static ImU32 GetColorU32(int idx)
+{
+    IM_ASSERT(idx < COLOR::COUNT);
+    return ImGui::ColorConvertFloat4ToU32(gContext.mStyle.Colors[idx]);
+}
 
-   static ImVec2 worldToPos(const vec_t& worldPos, const matrix_t& mat, ImVec2 position = ImVec2(0, 0), ImVec2 size = ImVec2(0, 0))
-   {
-      vec_t trans;
-      trans.TransformPoint(worldPos, mat);
-      trans *= 0.5f / trans.w;
-      trans += makeVect(0.5f, 0.5f);
-      trans.y = 1.f - trans.y;
-      trans.x *= size.x;
-      trans.y *= size.y;
-      trans.x += position.x;
-      trans.y += position.y;
-      return ImVec2(trans.x, trans.y);
-   }
+static ImVec2 worldToPos(const vec_t& worldPos, const matrix_t& mat, ImVec2 position = ImVec2(0, 0), ImVec2 size = ImVec2(0, 0))
+{
+    vec_t trans;
+    trans.TransformPoint(worldPos, mat);
+    trans *= 0.5f / trans.w;
+    trans += makeVect(0.5f, 0.5f);
+    trans.y = 1.f - trans.y;
+    trans.x *= size.x;
+    trans.y *= size.y;
+    trans.x += position.x;
+    trans.y += position.y;
+    return ImVec2(trans.x, trans.y);
+}
 
-   static void ComputeCameraRay(vec_t& rayOrigin, vec_t& rayDir, ImVec2 position = ImVec2(0, 0), ImVec2 size = ImVec2(0, 0))
-   {
-      ImGuiIO& io = ImGui::GetIO();
+static void ComputeCameraRay(vec_t& rayOrigin, vec_t& rayDir, ImVec2 position = ImVec2(0, 0), ImVec2 size = ImVec2(0, 0))
+{
+    ImGuiIO& io = ImGui::GetIO();
 
-      matrix_t mViewProjInverse;
-      mViewProjInverse.Inverse(gContext.mViewMat * gContext.mProjectionMat);
+    matrix_t mViewProjInverse;
+    mViewProjInverse.Inverse(gContext.mViewMat * gContext.mProjectionMat);
 
-      const float mox = ((io.MousePos.x - position.x) / size.x) * 2.f - 1.f;
-      const float moy = (1.f - ((io.MousePos.y - position.y) / size.y)) * 2.f - 1.f;
+    const float mox = ((io.MousePos.x - position.x) / size.x) * 2.f - 1.f;
+    const float moy = (1.f - ((io.MousePos.y - position.y) / size.y)) * 2.f - 1.f;
 
-      const float zNear = gContext.mReversed ? (1.f - FLT_EPSILON) : 0.f;
-      const float zFar = gContext.mReversed ? 0.f : (1.f - FLT_EPSILON);
+    const float zNear = gContext.mReversed ? (1.f - FLT_EPSILON) : 0.f;
+    const float zFar  = gContext.mReversed ? 0.f : (1.f - FLT_EPSILON);
 
-      rayOrigin.Transform(makeVect(mox, moy, zNear, 1.f), mViewProjInverse);
-      rayOrigin *= 1.f / rayOrigin.w;
-      vec_t rayEnd;
-      rayEnd.Transform(makeVect(mox, moy, zFar, 1.f), mViewProjInverse);
-      rayEnd *= 1.f / rayEnd.w;
-      rayDir = Normalized(rayEnd - rayOrigin);
-   }
+    rayOrigin.Transform(makeVect(mox, moy, zNear, 1.f), mViewProjInverse);
+    rayOrigin *= 1.f / rayOrigin.w;
+    vec_t rayEnd;
+    rayEnd.Transform(makeVect(mox, moy, zFar, 1.f), mViewProjInverse);
+    rayEnd *= 1.f / rayEnd.w;
+    rayDir = Normalized(rayEnd - rayOrigin);
+}
 #if 0
    static float GetSegmentLengthClipSpace(const vec_t& start, const vec_t& end, const bool localCoordinates = false)
    {
@@ -923,18 +945,18 @@ namespace IMGUIZMO_NAMESPACE
       return vertPos1 + V * t;
    }
 #endif
-   static float IntersectRayPlane(const vec_t& rOrigin, const vec_t& rVector, const vec_t& plan)
-   {
-      const float numer = plan.Dot3(rOrigin) - plan.w;
-      const float denom = plan.Dot3(rVector);
+static float IntersectRayPlane(const vec_t& rOrigin, const vec_t& rVector, const vec_t& plan)
+{
+    const float numer = plan.Dot3(rOrigin) - plan.w;
+    const float denom = plan.Dot3(rVector);
 
-      if (fabsf(denom) < FLT_EPSILON)  // normal is orthogonal to vector, cant intersect
-      {
-         return -1.0f;
-      }
+    if (fabsf(denom) < FLT_EPSILON) // normal is orthogonal to vector, cant intersect
+    {
+        return -1.0f;
+    }
 
-      return -(numer / denom);
-   }
+    return -(numer / denom);
+}
 #if 0
    static float DistanceToPlane(const vec_t& point, const vec_t& plan)
    {
@@ -946,18 +968,19 @@ namespace IMGUIZMO_NAMESPACE
       return IsWithin(p.x, gContext.mX, gContext.mXMax) && IsWithin(p.y, gContext.mY, gContext.mYMax);
    }
 #endif
-   static bool IsHoveringWindow()
-   {
-      ImGuiContext& g = *ImGui::GetCurrentContext();
-      ImGuiWindow* window = ImGui::FindWindowByName(gContext.mDrawList->_OwnerName);
-      if (g.HoveredWindow == window)   // Mouse hovering drawlist window
-         return true;
-      if (g.HoveredWindow != NULL)     // Any other window is hovered
-         return false;
-      if (ImGui::IsMouseHoveringRect(window->InnerRect.Min, window->InnerRect.Max, false))   // Hovering drawlist window rect, while no other window is hovered (for _NoInputs windows)
-         return true;
-      return false;
-   }
+static bool IsHoveringWindow()
+{
+    ImGuiContext& g      = *ImGui::GetCurrentContext();
+    ImGuiWindow*  window = ImGui::FindWindowByName(gContext.mDrawList->_OwnerName);
+    if (g.HoveredWindow == window) // Mouse hovering drawlist window
+        return true;
+    if (g.HoveredWindow != NULL) // Any other window is hovered
+        return false;
+    if (ImGui::IsMouseHoveringRect(window->InnerRect.Min, window->InnerRect.Max,
+                                   false)) // Hovering drawlist window rect, while no other window is hovered (for _NoInputs windows)
+        return true;
+    return false;
+}
 #if 0
    void SetRect(float x, float y, float width, float height)
    {
@@ -985,29 +1008,30 @@ namespace IMGUIZMO_NAMESPACE
       ImGui::SetCurrentContext(ctx);
    }
 #endif
-   void BeginFrame()
-   {
-      const ImU32 flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus;
+void BeginFrame()
+{
+    const ImU32 flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoInputs |
+                        ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus;
 
 #ifdef IMGUI_HAS_VIEWPORT
-      ImGui::SetNextWindowSize(ImGui::GetMainViewport()->Size);
-      ImGui::SetNextWindowPos(ImGui::GetMainViewport()->Pos);
+    ImGui::SetNextWindowSize(ImGui::GetMainViewport()->Size);
+    ImGui::SetNextWindowPos(ImGui::GetMainViewport()->Pos);
 #else
-      ImGuiIO& io = ImGui::GetIO();
-      ImGui::SetNextWindowSize(io.DisplaySize);
-      ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGuiIO& io = ImGui::GetIO();
+    ImGui::SetNextWindowSize(io.DisplaySize);
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
 #endif
 
-      ImGui::PushStyleColor(ImGuiCol_WindowBg, 0);
-      ImGui::PushStyleColor(ImGuiCol_Border, 0);
-      ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, 0);
+    ImGui::PushStyleColor(ImGuiCol_Border, 0);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 
-      ImGui::Begin("gizmo", NULL, flags);
-      gContext.mDrawList = ImGui::GetWindowDrawList();
-      ImGui::End();
-      ImGui::PopStyleVar();
-      ImGui::PopStyleColor(2);
-   }
+    ImGui::Begin("gizmo", NULL, flags);
+    gContext.mDrawList = ImGui::GetWindowDrawList();
+    ImGui::End();
+    ImGui::PopStyleVar();
+    ImGui::PopStyleColor(2);
+}
 #if 0
    bool IsUsing()
    {
@@ -1057,14 +1081,14 @@ namespace IMGUIZMO_NAMESPACE
       }
    }
 #endif
-   static void ComputeContext(const float* view, const float* projection, float* matrix, MODE mode)
-   {
+static void ComputeContext(const float* view, const float* projection, float* matrix, MODE mode)
+{
 #if 0
       gContext.mMode = mode;
 #endif
-      gContext.mViewMat = *(matrix_t*)view;
-      gContext.mProjectionMat = *(matrix_t*)projection;
-      gContext.mbMouseOver = IsHoveringWindow();
+    gContext.mViewMat       = *(matrix_t*) view;
+    gContext.mProjectionMat = *(matrix_t*) projection;
+    gContext.mbMouseOver    = IsHoveringWindow();
 #if 0
       gContext.mModelLocal = *(matrix_t*)matrix;
       gContext.mModelLocal.OrthoNormalize();
@@ -1093,12 +1117,12 @@ namespace IMGUIZMO_NAMESPACE
       gContext.mCameraRight = viewInverse.v.right;
       gContext.mCameraUp = viewInverse.v.up;
 #endif
-      // projection reverse
-       vec_t nearPos, farPos;
-       nearPos.Transform(makeVect(0, 0, 1.f, 1.f), gContext.mProjectionMat);
-       farPos.Transform(makeVect(0, 0, 2.f, 1.f), gContext.mProjectionMat);
+    // projection reverse
+    vec_t nearPos, farPos;
+    nearPos.Transform(makeVect(0, 0, 1.f, 1.f), gContext.mProjectionMat);
+    farPos.Transform(makeVect(0, 0, 2.f, 1.f), gContext.mProjectionMat);
 
-       gContext.mReversed = (nearPos.z/nearPos.w) > (farPos.z / farPos.w);
+    gContext.mReversed = (nearPos.z / nearPos.w) > (farPos.z / farPos.w);
 #if 0
       // compute scale from the size of camera right vector projected on screen at the matrix position
       vec_t pointRight = viewInverse.v.right;
@@ -1115,8 +1139,8 @@ namespace IMGUIZMO_NAMESPACE
       gContext.mScreenSquareMin = ImVec2(centerSSpace.x - 10.f, centerSSpace.y - 10.f);
       gContext.mScreenSquareMax = ImVec2(centerSSpace.x + 10.f, centerSSpace.y + 10.f);
 #endif
-      ComputeCameraRay(gContext.mRayOrigin, gContext.mRayVector);
-   }
+    ComputeCameraRay(gContext.mRayOrigin, gContext.mRayVector);
+}
 #if 0
    static void ComputeColors(ImU32* colors, int type, OPERATION operation)
    {
@@ -2789,170 +2813,170 @@ namespace IMGUIZMO_NAMESPACE
       }
    }
 #endif
-   ViewManipulateResult ViewManipulate(float* view, const float* projection, OPERATION operation, MODE mode, float* matrix, float length, ImVec2 position, ImVec2 size, ImU32 backgroundColor)
-   {
-      // Scale is always local or matrix will be skewed when applying world scale or oriented matrix
-      ComputeContext(view, projection, matrix, (operation & SCALE) ? LOCAL : mode);
-      return ViewManipulate(view, length, position, size, backgroundColor);
-   }
+ViewManipulateResult ViewManipulate(float*       view,
+                                    const float* projection,
+                                    OPERATION    operation,
+                                    MODE         mode,
+                                    float*       matrix,
+                                    float        length,
+                                    ImVec2       position,
+                                    ImVec2       size,
+                                    ImU32        backgroundColor)
+{
+    // Scale is always local or matrix will be skewed when applying world scale or oriented matrix
+    ComputeContext(view, projection, matrix, (operation & SCALE) ? LOCAL : mode);
+    return ViewManipulate(view, length, position, size, backgroundColor);
+}
 
-   void OrthoGraphic(const float l, float r, float b, const float t, float zn, const float zf, float* m16)
-   {
-       m16[0]  = 2 / (r - l);
-       m16[1]  = 0.0f;
-       m16[2]  = 0.0f;
-       m16[3]  = 0.0f;
-       m16[4]  = 0.0f;
-       m16[5]  = 2 / (t - b);
-       m16[6]  = 0.0f;
-       m16[7]  = 0.0f;
-       m16[8]  = 0.0f;
-       m16[9]  = 0.0f;
-       m16[10] = 1.0f / (zf - zn);
-       m16[11] = 0.0f;
-       m16[12] = (l + r) / (l - r);
-       m16[13] = (t + b) / (b - t);
-       m16[14] = zn / (zn - zf);
-       m16[15] = 1.0f;
-   }
+void OrthoGraphic(const float l, float r, float b, const float t, float zn, const float zf, float* m16)
+{
+    m16[0]  = 2 / (r - l);
+    m16[1]  = 0.0f;
+    m16[2]  = 0.0f;
+    m16[3]  = 0.0f;
+    m16[4]  = 0.0f;
+    m16[5]  = 2 / (t - b);
+    m16[6]  = 0.0f;
+    m16[7]  = 0.0f;
+    m16[8]  = 0.0f;
+    m16[9]  = 0.0f;
+    m16[10] = 1.0f / (zf - zn);
+    m16[11] = 0.0f;
+    m16[12] = (l + r) / (l - r);
+    m16[13] = (t + b) / (b - t);
+    m16[14] = zn / (zn - zf);
+    m16[15] = 1.0f;
+}
 
-   ViewManipulateResult ViewManipulate(float* view, float length, ImVec2 position, ImVec2 size, ImU32 backgroundColor)
-   {
-      static bool isDraging = false;
-      static bool isClicking = false;
-      static bool isInside = false;
-      static vec_t interpolationUp;
-      static vec_t interpolationDir;
-      static int interpolationFrames = 0;
-      const vec_t referenceUp = makeVect(0.f, 1.f, 0.f);
+ViewManipulateResult ViewManipulate(float* view, float length, ImVec2 position, ImVec2 size, ImU32 backgroundColor)
+{
+    static bool  isDraging  = false;
+    static bool  isClicking = false;
+    static bool  isInside   = false;
+    static vec_t interpolationUp;
+    static vec_t interpolationDir;
+    static int   interpolationFrames = 0;
+    const vec_t  referenceUp         = makeVect(0.f, 1.f, 0.f);
 
-      matrix_t svgView, svgProjection;
-      svgView = gContext.mViewMat;
-      svgProjection = gContext.mProjectionMat;
+    matrix_t svgView, svgProjection;
+    svgView       = gContext.mViewMat;
+    svgProjection = gContext.mProjectionMat;
 
-      ImGuiIO& io = ImGui::GetIO();
-      gContext.mDrawList->AddRectFilled(position, position + size, backgroundColor);
-      matrix_t viewInverse;
-      viewInverse.Inverse(*(matrix_t*)view);
+    ImGuiIO& io = ImGui::GetIO();
+    gContext.mDrawList->AddRectFilled(position, position + size, backgroundColor);
+    matrix_t viewInverse;
+    viewInverse.Inverse(*(matrix_t*) view);
 
-      const vec_t camTarget = viewInverse.v.position - viewInverse.v.dir * length;
+    const vec_t camTarget = viewInverse.v.position - viewInverse.v.dir * length;
 
-      // view/projection matrices
-      const float distance = 3.f;
-      matrix_t cubeProjection, cubeView;
-      OrthoGraphic(-1, 1, -1, 1, 0.01f, 1000.f, cubeProjection.m16);
+    // view/projection matrices
+    const float distance = 3.f;
+    matrix_t    cubeProjection, cubeView;
+    OrthoGraphic(-1, 1, -1, 1, 0.01f, 1000.f, cubeProjection.m16);
 
-      vec_t dir = makeVect(viewInverse.m[2][0], viewInverse.m[2][1], viewInverse.m[2][2]);
-      vec_t up = makeVect(viewInverse.m[1][0], viewInverse.m[1][1], viewInverse.m[1][2]);
-      vec_t eye = dir * distance;
-      vec_t zero = makeVect(0.f, 0.f);
-      LookAt(&eye.x, &zero.x, &up.x, cubeView.m16);
+    vec_t dir  = makeVect(viewInverse.m[2][0], viewInverse.m[2][1], viewInverse.m[2][2]);
+    vec_t up   = makeVect(viewInverse.m[1][0], viewInverse.m[1][1], viewInverse.m[1][2]);
+    vec_t eye  = dir * distance;
+    vec_t zero = makeVect(0.f, 0.f);
+    LookAt(&eye.x, &zero.x, &up.x, cubeView.m16);
 
-      // set context
-      gContext.mViewMat = cubeView;
-      gContext.mProjectionMat = cubeProjection;
-      ComputeCameraRay(gContext.mRayOrigin, gContext.mRayVector, position, size);
+    // set context
+    gContext.mViewMat       = cubeView;
+    gContext.mProjectionMat = cubeProjection;
+    ComputeCameraRay(gContext.mRayOrigin, gContext.mRayVector, position, size);
 
-      const matrix_t res = cubeView * cubeProjection;
+    const matrix_t res = cubeView * cubeProjection;
 
-      // panels
-      static const ImVec2 panelPosition[9] = { ImVec2(0.75f,0.75f), ImVec2(0.25f, 0.75f), ImVec2(0.f, 0.75f),
-         ImVec2(0.75f, 0.25f), ImVec2(0.25f, 0.25f), ImVec2(0.f, 0.25f),
-         ImVec2(0.75f, 0.f), ImVec2(0.25f, 0.f), ImVec2(0.f, 0.f) };
+    // panels
+    static const ImVec2 panelPosition[9] = {ImVec2(0.75f, 0.75f), ImVec2(0.25f, 0.75f), ImVec2(0.f, 0.75f),
+                                            ImVec2(0.75f, 0.25f), ImVec2(0.25f, 0.25f), ImVec2(0.f, 0.25f),
+                                            ImVec2(0.75f, 0.f),   ImVec2(0.25f, 0.f),   ImVec2(0.f, 0.f)};
 
-      static const ImVec2 panelSize[9] = { ImVec2(0.25f,0.25f), ImVec2(0.5f, 0.25f), ImVec2(0.25f, 0.25f),
-         ImVec2(0.25f, 0.5f), ImVec2(0.5f, 0.5f), ImVec2(0.25f, 0.5f),
-         ImVec2(0.25f, 0.25f), ImVec2(0.5f, 0.25f), ImVec2(0.25f, 0.25f) };
+    static const ImVec2 panelSize[9] = {ImVec2(0.25f, 0.25f), ImVec2(0.5f, 0.25f), ImVec2(0.25f, 0.25f),
+                                        ImVec2(0.25f, 0.5f),  ImVec2(0.5f, 0.5f),  ImVec2(0.25f, 0.5f),
+                                        ImVec2(0.25f, 0.25f), ImVec2(0.5f, 0.25f), ImVec2(0.25f, 0.25f)};
 
-      // tag faces
-      bool boxes[27]{};
-      static int overBox = -1;
-      for (int iPass = 0; iPass < 2; iPass++)
-      {
-         for (int iFace = 0; iFace < 6; iFace++)
-         {
-            const int normalIndex = (iFace % 3);
-            const int perpXIndex = (normalIndex + 1) % 3;
-            const int perpYIndex = (normalIndex + 2) % 3;
-            const float invert = (iFace > 2) ? -1.f : 1.f;
+    // tag faces
+    bool       boxes[27]{};
+    static int overBox = -1;
+    for (int iPass = 0; iPass < 2; iPass++) {
+        for (int iFace = 0; iFace < 6; iFace++) {
+            const int   normalIndex  = (iFace % 3);
+            const int   perpXIndex   = (normalIndex + 1) % 3;
+            const int   perpYIndex   = (normalIndex + 2) % 3;
+            const float invert       = (iFace > 2) ? -1.f : 1.f;
             const vec_t indexVectorX = directionUnary[perpXIndex] * invert;
             const vec_t indexVectorY = directionUnary[perpYIndex] * invert;
-            const vec_t boxOrigin = directionUnary[normalIndex] * -invert - indexVectorX - indexVectorY;
+            const vec_t boxOrigin    = directionUnary[normalIndex] * -invert - indexVectorX - indexVectorY;
 
             // plan local space
-            const vec_t n = directionUnary[normalIndex] * invert;
-            vec_t viewSpaceNormal = n;
-            vec_t viewSpacePoint = n * 0.f;
+            const vec_t n               = directionUnary[normalIndex] * invert;
+            vec_t       viewSpaceNormal = n;
+            vec_t       viewSpacePoint  = n * 0.f;
             viewSpaceNormal.TransformVector(cubeView);
             viewSpaceNormal.Normalize();
             viewSpacePoint.TransformPoint(cubeView);
             const vec_t viewSpaceFacePlan = BuildPlan(viewSpacePoint, viewSpaceNormal);
 
             // back face culling
-            if (viewSpaceFacePlan.w > 0.f)
-            {
-               continue;
+            if (viewSpaceFacePlan.w > 0.f) {
+                continue;
             }
 
             const vec_t facePlan = BuildPlan(n * 0.5f, n);
 
-            const float len = IntersectRayPlane(gContext.mRayOrigin, gContext.mRayVector, facePlan);
-            vec_t posOnPlan = gContext.mRayOrigin + gContext.mRayVector * len - (n * 0.5f);
+            const float len       = IntersectRayPlane(gContext.mRayOrigin, gContext.mRayVector, facePlan);
+            vec_t       posOnPlan = gContext.mRayOrigin + gContext.mRayVector * len - (n * 0.5f);
 
             float localx = Dot(directionUnary[perpXIndex], posOnPlan) * invert + 0.5f;
             float localy = Dot(directionUnary[perpYIndex], posOnPlan) * invert + 0.5f;
 
             // panels
-            const vec_t dx = directionUnary[perpXIndex];
-            const vec_t dy = directionUnary[perpYIndex];
-            const vec_t origin = directionUnary[normalIndex] - dx - dy;
-            ImU32 faceColor = GetColorU32(FACE);
-            for (int iPanel = 0; iPanel < 9; iPanel++)
-            {
-               vec_t boxCoord = boxOrigin + indexVectorX * float(iPanel % 3) + indexVectorY * float(iPanel / 3) + makeVect(1.f, 1.f, 1.f);
-               const ImVec2 p = panelPosition[iPanel] * 2.f;
-               const ImVec2 s = panelSize[iPanel] * 2.f;
-               ImVec2 faceCoordsScreen[4];
-               vec_t panelPos[4] = { dx * p.x + dy * p.y,
-                                     dx * p.x + dy * (p.y + s.y),
-                                     dx * (p.x + s.x) + dy * (p.y + s.y),
-                                     dx * (p.x + s.x) + dy * p.y };
+            const vec_t dx        = directionUnary[perpXIndex];
+            const vec_t dy        = directionUnary[perpYIndex];
+            const vec_t origin    = directionUnary[normalIndex] - dx - dy;
+            ImU32       faceColor = GetColorU32(FACE);
+            for (int iPanel = 0; iPanel < 9; iPanel++) {
+                vec_t boxCoord = boxOrigin + indexVectorX * float(iPanel % 3) + indexVectorY * float(iPanel / 3) + makeVect(1.f, 1.f, 1.f);
+                const ImVec2 p = panelPosition[iPanel] * 2.f;
+                const ImVec2 s = panelSize[iPanel] * 2.f;
+                ImVec2       faceCoordsScreen[4];
+                vec_t        panelPos[4] = {dx * p.x + dy * p.y, dx * p.x + dy * (p.y + s.y), dx * (p.x + s.x) + dy * (p.y + s.y),
+                                     dx * (p.x + s.x) + dy * p.y};
 
-               for (unsigned int iCoord = 0; iCoord < 4; iCoord++)
-               {
-                  faceCoordsScreen[iCoord] = worldToPos((panelPos[iCoord] + origin) * 0.5f * invert, res, position, size);
-               }
+                for (unsigned int iCoord = 0; iCoord < 4; iCoord++) {
+                    faceCoordsScreen[iCoord] = worldToPos((panelPos[iCoord] + origin) * 0.5f * invert, res, position, size);
+                }
 
-               const ImVec2 panelCorners[2] = { panelPosition[iPanel], panelPosition[iPanel] + panelSize[iPanel] };
-               bool insidePanel = localx > panelCorners[0].x && localx < panelCorners[1].x && localy > panelCorners[0].y && localy < panelCorners[1].y;
-               int boxCoordInt = int(boxCoord.x * 9.f + boxCoord.y * 3.f + boxCoord.z);
-               IM_ASSERT(boxCoordInt < 27);
-               boxes[boxCoordInt] |= insidePanel && (!isDraging) && gContext.mbMouseOver;
+                const ImVec2 panelCorners[2] = {panelPosition[iPanel], panelPosition[iPanel] + panelSize[iPanel]};
+                bool         insidePanel     = localx > panelCorners[0].x && localx < panelCorners[1].x && localy > panelCorners[0].y &&
+                                   localy < panelCorners[1].y;
+                int boxCoordInt = int(boxCoord.x * 9.f + boxCoord.y * 3.f + boxCoord.z);
+                IM_ASSERT(boxCoordInt < 27);
+                boxes[boxCoordInt] |= insidePanel && (!isDraging) && gContext.mbMouseOver;
 
-               // draw face with lighter color
-               if (iPass)
-               {
-                  gContext.mDrawList->AddConvexPolyFilled(faceCoordsScreen, 4, faceColor);
-                  if (boxes[boxCoordInt])
-                  {
-                     gContext.mDrawList->AddConvexPolyFilled(faceCoordsScreen, 4, IM_COL32(0xF0, 0xA0, 0x60, 0x80));
+                // draw face with lighter color
+                if (iPass) {
+                    gContext.mDrawList->AddConvexPolyFilled(faceCoordsScreen, 4, faceColor);
+                    if (boxes[boxCoordInt]) {
+                        gContext.mDrawList->AddConvexPolyFilled(faceCoordsScreen, 4, IM_COL32(0xF0, 0xA0, 0x60, 0x80));
 
 #if IMGUI_VERSION_NUM >= 18723
-                     ImGui::SetNextFrameWantCaptureMouse(true);
+                        ImGui::SetNextFrameWantCaptureMouse(true);
 #else
-                     ImGui::CaptureMouseFromApp();
+                        ImGui::CaptureMouseFromApp();
 #endif
-                     if (io.MouseDown[0] && !isClicking && !isDraging && GImGui->ActiveId == 0) {
-                        overBox = boxCoordInt;
-                        isClicking = true;
-                        isDraging  = true;
-                        interpolationFrames = 0;
-                     }
-                  }
-               }
+                        if (io.MouseDown[0] && !isClicking && !isDraging && GImGui->ActiveId == 0) {
+                            overBox             = boxCoordInt;
+                            isClicking          = true;
+                            isDraging           = true;
+                            interpolationFrames = 0;
+                        }
+                    }
+                }
             }
 
-             if (iPass) {
+            if (iPass) {
                 // Draw face label
                 ImDrawList* drawList        = gContext.mDrawList;
                 int         vtx_write_start = drawList->VtxBuffer.Size;
@@ -2965,18 +2989,18 @@ namespace IMGUIZMO_NAMESPACE
                 drawList->AddText(ImVec2(0, 0), GetColorU32(TEXT), label);
                 ImDrawVert* vtx_write_end = drawList->_VtxWritePtr;
 
-                vec_t tdx = directionUnary[perpXIndex];
-                vec_t tdy  = directionUnary[perpYIndex];
+                vec_t  tdx     = directionUnary[perpXIndex];
+                vec_t  tdy     = directionUnary[perpYIndex];
                 ImVec2 invert2 = {1, 1};
                 switch (iFace) {
                 case 0: // Back
-                    tdx = directionUnary[2];
-                    tdy = directionUnary[1];
-                    invert2 = {-1, - 1};
+                    tdx     = directionUnary[2];
+                    tdy     = directionUnary[1];
+                    invert2 = {-1, -1};
                     break;
                 case 3: // Front
-                    tdx = directionUnary[2];
-                    tdy = directionUnary[1];
+                    tdx       = directionUnary[2];
+                    tdy       = directionUnary[1];
                     invert2.x = -1;
                     break;
                 case 1: // Top
@@ -2998,33 +3022,33 @@ namespace IMGUIZMO_NAMESPACE
                     v->pos   = worldToPos((pt + origin) * 0.5 * invert, res, position, size);
                 }
             }
-         }
-      }
+        }
+    }
 
-      // draw axis
-      {
-         ImDrawList* drawList = gContext.mDrawList;
-         const vec_t origin = makeVect(-0.5f, -0.5f, -0.5f);
-         for (int i = 0; i < 3; ++i) {
+    // draw axis
+    {
+        ImDrawList* drawList = gContext.mDrawList;
+        const vec_t origin   = makeVect(-0.5f, -0.5f, -0.5f);
+        for (int i = 0; i < 3; ++i) {
             vec_t  dirAxis        = directionUnary[i];
             ImVec2 baseSSpace     = worldToPos(origin, res, position, size);
             ImVec2 worldDirSSpace = worldToPos(origin + dirAxis, res, position, size);
 
             bool visible = false;
             {
-               vec_t mid = origin + (dirAxis * 0.5);
-               vec_t eye = makeVect(0.f, 0.f, 0.5f);
-               eye.Normalize();
-               for (int j = 1; j <= 2; j++) {
-                   vec_t f = mid + (directionUnary[(i + j) % 3] * 0.5);
-                   f.TransformVector(cubeView);
-                   f.Normalize();
-                   auto w = f.Dot(eye);
-                   if (w > 0) {
-                       visible = true;
-                       break;
-                   }
-               }
+                vec_t mid = origin + (dirAxis * 0.5);
+                vec_t eye = makeVect(0.f, 0.f, 0.5f);
+                eye.Normalize();
+                for (int j = 1; j <= 2; j++) {
+                    vec_t f = mid + (directionUnary[(i + j) % 3] * 0.5);
+                    f.TransformVector(cubeView);
+                    f.Normalize();
+                    auto w = f.Dot(eye);
+                    if (w > 0) {
+                        visible = true;
+                        break;
+                    }
+                }
             }
 
             ImVec4 directionColorV = gContext.mStyle.Colors[DIRECTION_X + i];
@@ -3033,15 +3057,15 @@ namespace IMGUIZMO_NAMESPACE
             }
             ImU32 directionColor = ImGui::ColorConvertFloat4ToU32(directionColorV); // | IM_COL32(0x80, 0x80, 0x80, 0x00);
             drawList->AddLine(baseSSpace, worldDirSSpace, directionColor, gContext.mStyle.TranslationLineThickness);
-            
-            /* ORCA Dont draw arrow heads
+
+            /* ADARTYS Dont draw arrow heads
             // Arrow head begin
             ImVec2 dir(baseSSpace - worldDirSSpace);
-            
+
             float d = sqrtf(ImLengthSqr(dir));
             dir /= d; // Normalize
             dir *= gContext.mStyle.TranslationLineArrowSize;
-            
+
             ImVec2 ortogonalDir(dir.y, -dir.x); // Perpendicular vector
             ImVec2 a(worldDirSSpace + dir);
             drawList->AddTriangleFilled(worldDirSSpace - dir, a + ortogonalDir, a - ortogonalDir, directionColor);
@@ -3052,115 +3076,110 @@ namespace IMGUIZMO_NAMESPACE
             ImVec2 labelSSpace = worldToPos(origin + dirAxis * 1.2f, res, position, size);
             ImVec2 labelSize   = ImGui::CalcTextSize(gContext.mStyle.AxisLabels[i]);
             drawList->AddText(labelSSpace - labelSize * 0.5, directionColor, gContext.mStyle.AxisLabels[i]);
-         }
-      }
+        }
+    }
 
-      ViewManipulateResult result;
-      if (interpolationFrames)
-      {
-         interpolationFrames--;
-         vec_t newDir = viewInverse.v.dir;
-         newDir.Lerp(interpolationDir, 0.2f);
-         newDir.Normalize();
+    ViewManipulateResult result;
+    if (interpolationFrames) {
+        interpolationFrames--;
+        vec_t newDir = viewInverse.v.dir;
+        newDir.Lerp(interpolationDir, 0.2f);
+        newDir.Normalize();
 
-         vec_t newUp = viewInverse.v.up;
-         newUp.Lerp(interpolationUp, 0.3f);
-         newUp.Normalize();
-         newUp = interpolationUp;
-         vec_t newEye = camTarget + newDir * length;
-         LookAt(&newEye.x, &camTarget.x, &newUp.x, view);
-         result.changed = true;
-      }
-      isInside = gContext.mbMouseOver && ImRect(position, position + size).Contains(io.MousePos);
+        vec_t newUp = viewInverse.v.up;
+        newUp.Lerp(interpolationUp, 0.3f);
+        newUp.Normalize();
+        newUp        = interpolationUp;
+        vec_t newEye = camTarget + newDir * length;
+        LookAt(&newEye.x, &camTarget.x, &newUp.x, view);
+        result.changed = true;
+    }
+    isInside = gContext.mbMouseOver && ImRect(position, position + size).Contains(io.MousePos);
 
-      if (io.MouseDown[0] && (fabsf(io.MouseDelta[0]) || fabsf(io.MouseDelta[1])) && isClicking)
-      {
-         isClicking = false;
+    if (io.MouseDown[0] && (fabsf(io.MouseDelta[0]) || fabsf(io.MouseDelta[1])) && isClicking) {
+        isClicking = false;
 
 #if IMGUI_VERSION_NUM >= 18723
-         ImGui::SetNextFrameWantCaptureMouse(true);
+        ImGui::SetNextFrameWantCaptureMouse(true);
 #else
-         ImGui::CaptureMouseFromApp();
+        ImGui::CaptureMouseFromApp();
 #endif
-      }
+    }
 
-      if (!io.MouseDown[0])
-      {
-         if (isClicking)
-         {
+    if (!io.MouseDown[0]) {
+        if (isClicking) {
             // apply new view direction
-            int cx = overBox / 9;
-            int cy = (overBox - cx * 9) / 3;
-            int cz = overBox % 3;
-            interpolationDir = makeVect(1.f - (float)cx, 1.f - (float)cy, 1.f - (float)cz);
+            int cx           = overBox / 9;
+            int cy           = (overBox - cx * 9) / 3;
+            int cz           = overBox % 3;
+            interpolationDir = makeVect(1.f - (float) cx, 1.f - (float) cy, 1.f - (float) cz);
             interpolationDir.Normalize();
 
-            if (fabsf(Dot(interpolationDir, referenceUp)) > 1.0f - 0.01f)
-            {
-               interpolationUp = overBox == 10 ? makeVect(1.f, 0.f, 0.f) : makeVect(-1.f, 0.f, 0.f);
-            }
-            else
-            {
-               interpolationUp = referenceUp;
+            if (fabsf(Dot(interpolationDir, referenceUp)) > 1.0f - 0.01f) {
+                interpolationUp = overBox == 10 ? makeVect(1.f, 0.f, 0.f) : makeVect(-1.f, 0.f, 0.f);
+            } else {
+                interpolationUp = referenceUp;
             }
             interpolationFrames = 40;
-            result.changed = true;
-            result.clicked_box = overBox;
-         }
-         isClicking = false;
-         isDraging = false;
-      }
+            result.changed      = true;
+            result.clicked_box  = overBox;
+        }
+        isClicking = false;
+        isDraging  = false;
+    }
 
+    if (isDraging && (fabsf(io.MouseDelta[0]) || fabsf(io.MouseDelta[1]))) {
+        auto delta_x = io.MouseDelta.y * 0.01f;
+        auto delta_y = io.MouseDelta.x * 0.01f;
 
-      if (isDraging && (fabsf(io.MouseDelta[0]) || fabsf(io.MouseDelta[1])))
-      {
-         auto delta_x = io.MouseDelta.y * 0.01f;
-         auto delta_y = io.MouseDelta.x * 0.01f;
+        matrix_t vvv = *(matrix_t*) view;
+        // Calculate the rotation along x-axis
+        auto rot_x_deg = std::acos(std::clamp(Dot(vvv.v.up, referenceUp), -1.0f, 1.0f));
+        if (vvv.v.up.z < 0)
+            rot_x_deg *= -1;
 
-         matrix_t vvv = *(matrix_t*)view;
-         // Calculate the rotation along x-axis
-         auto rot_x_deg = std::acos(std::clamp(Dot(vvv.v.up, referenceUp), -1.0f, 1.0f));
-         if (vvv.v.up.z < 0) rot_x_deg *= -1;
+        const vec_t referenceRight   = makeVect(1.f, 0.f, 0.f);
+        const vec_t referenceForward = makeVect(0.f, 0.f, 1.f);
+        matrix_t    rx2;
+        rx2.RotationAxis(referenceRight, rot_x_deg);
+        vec_t f2;
+        f2.TransformVector(referenceForward, rx2);
 
-         const vec_t referenceRight = makeVect(1.f, 0.f, 0.f);
-         const vec_t referenceForward = makeVect(0.f, 0.f, 1.f);
-         matrix_t rx2;
-         rx2.RotationAxis(referenceRight, rot_x_deg);
-         vec_t f2;
-         f2.TransformVector(referenceForward, rx2);
+        // Then calculate the rotation along y-axis
+        auto rot_y_deg = std::acos(std::clamp(Dot(vvv.v.dir, f2), -1.0f, 1.0f));
+        if (vvv.v.dir.x < 0)
+            rot_y_deg *= -1;
 
-         // Then calculate the rotation along y-axis
-         auto rot_y_deg = std::acos(std::clamp(Dot(vvv.v.dir, f2), -1.0f, 1.0f));
-         if (vvv.v.dir.x < 0) rot_y_deg *= -1;
+        // Apply deltas
+        rot_x_deg += delta_x;
+        rot_y_deg += delta_y;
+        // Clamp
+        if (rot_x_deg > 0.5 * M_PI)
+            rot_x_deg = 0.5 * M_PI;
+        else if (rot_x_deg < -0.5 * M_PI)
+            rot_x_deg = -0.5 * M_PI;
 
-         // Apply deltas
-         rot_x_deg += delta_x;
-         rot_y_deg += delta_y;
-         // Clamp
-         if (rot_x_deg > 0.5 * M_PI) rot_x_deg = 0.5 * M_PI;
-         else if (rot_x_deg < -0.5 * M_PI) rot_x_deg = -0.5 * M_PI;
+        matrix_t rx, ry, roll;
+        // Calculate new rotation matrix
+        rx.RotationAxis(referenceRight, rot_x_deg);
+        f2.TransformVector(referenceUp, rx);
+        ry.RotationAxis(f2, rot_y_deg);
 
-         matrix_t rx, ry, roll;
-         // Calculate new rotation matrix
-         rx.RotationAxis(referenceRight, rot_x_deg);
-         f2.TransformVector(referenceUp, rx);
-         ry.RotationAxis(f2, rot_y_deg);
+        roll = rx * ry;
 
-         roll = rx * ry;
-
-         *(matrix_t*)view = roll;
+        *(matrix_t*) view = roll;
 #if IMGUI_VERSION_NUM >= 18723
-         ImGui::SetNextFrameWantCaptureMouse(true);
+        ImGui::SetNextFrameWantCaptureMouse(true);
 #else
-         ImGui::CaptureMouseFromApp();
+        ImGui::CaptureMouseFromApp();
 #endif
-         result.changed = true;
-         result.dragging = true;
-      }
+        result.changed  = true;
+        result.dragging = true;
+    }
 
-      // restore view/projection because it was used to compute ray
-      ComputeContext(svgView.m16, svgProjection.m16, nullptr/*gContext.mModelSource.m16*/, WORLD/*gContext.mMode*/);
+    // restore view/projection because it was used to compute ray
+    ComputeContext(svgView.m16, svgProjection.m16, nullptr /*gContext.mModelSource.m16*/, WORLD /*gContext.mMode*/);
 
-      return result;
-   }
-};
+    return result;
+}
+}; // namespace IMGUIZMO_NAMESPACE

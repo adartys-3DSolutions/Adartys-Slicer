@@ -2,8 +2,8 @@
 
 #include <wx/dc.h>
 
-wxDEFINE_EVENT( wxEVT_TAB_SEL_CHANGING, wxCommandEvent );
-wxDEFINE_EVENT( wxEVT_TAB_SEL_CHANGED, wxCommandEvent );
+wxDEFINE_EVENT(wxEVT_TAB_SEL_CHANGING, wxCommandEvent);
+wxDEFINE_EVENT(wxEVT_TAB_SEL_CHANGED, wxCommandEvent);
 
 BEGIN_EVENT_TABLE(TabCtrl, StaticBox)
 
@@ -22,11 +22,7 @@ END_EVENT_TABLE()
 #define TAB_BUTTON_PADDING_Y 2
 #define TAB_BUTTON_PADDING TAB_BUTTON_PADDING_X, TAB_BUTTON_PADDING_Y
 
-TabCtrl::TabCtrl(wxWindow *      parent,
-                   wxWindowID      id,
-                   const wxPoint & pos,
-                   const wxSize &  size,
-                   long            style)
+TabCtrl::TabCtrl(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : StaticBox(parent, id, pos, size, style)
 {
 #if 0
@@ -40,14 +36,11 @@ TabCtrl::TabCtrl(wxWindow *      parent,
     sizer->AddSpacer(10);
     SetSizer(sizer);
     Bind(wxEVT_COMMAND_BUTTON_CLICKED, &TabCtrl::buttonClicked, this);
-    //wxString reason;
-    //IsTransparentBackgroundSupported(&reason);
+    // wxString reason;
+    // IsTransparentBackgroundSupported(&reason);
 }
 
-TabCtrl::~TabCtrl()
-{
-    delete images;
-}
+TabCtrl::~TabCtrl() { delete images; }
 
 int TabCtrl::GetSelection() const { return sel; }
 
@@ -57,14 +50,14 @@ void TabCtrl::SelectItem(int item)
         return;
     if (sel >= 0) {
         wxCommandEvent e(wxEVT_CHECKBOX);
-        auto b = btns[sel];
+        auto           b = btns[sel];
         e.SetEventObject(b);
         b->GetEventHandler()->ProcessEvent(e);
     }
     sel = item;
     if (sel >= 0) {
         wxCommandEvent e(wxEVT_CHECKBOX);
-        auto b = btns[sel];
+        auto           b = btns[sel];
         e.SetEventObject(b);
         b->GetEventHandler()->ProcessEvent(e);
     }
@@ -73,14 +66,11 @@ void TabCtrl::SelectItem(int item)
     Refresh();
 }
 
-void TabCtrl::Unselect()
-{
-    SelectItem(-1);
-}
+void TabCtrl::Unselect() { SelectItem(-1); }
 
 void TabCtrl::Rescale()
 {
-    for (auto & b : btns)
+    for (auto& b : btns)
         b->Rescale();
 }
 
@@ -93,16 +83,13 @@ bool TabCtrl::SetFont(wxFont const& font)
     return true;
 }
 
-int TabCtrl::AppendItem(const wxString &item,
-                     int image, int selImage,
-                     void * clientData)
+int TabCtrl::AppendItem(const wxString& item, int image, int selImage, void* clientData)
 {
-    Button * btn = new Button();
+    Button* btn = new Button();
     btn->Create(this, item, "", wxBORDER_NONE);
     btn->SetFont(GetFont());
-    btn->SetTextColor(StateColor(
-        std::make_pair(0x6B6B6C, (int) StateColor::NotChecked),
-        std::make_pair(*wxLIGHT_GREY, (int) StateColor::Normal)));
+    btn->SetTextColor(
+        StateColor(std::make_pair(0x6B6B6C, (int) StateColor::NotChecked), std::make_pair(*wxLIGHT_GREY, (int) StateColor::Normal)));
     btn->SetBackgroundColor(StateColor());
     btn->SetCornerRadius(0);
     btn->SetPaddingSize({TAB_BUTTON_PADDING});
@@ -134,7 +121,7 @@ bool TabCtrl::DeleteItem(int item)
         sizer->GetItem(sizer->GetItemCount() - 1)->SetMinSize({0, 0});
 
     if (selection_changed) {
-        sel--;  // `relayout()` uses `sel` so we need to update this before calling `relayout()`
+        sel--; // `relayout()` uses `sel` so we need to update this before calling `relayout()`
     }
     relayout();
     if (selection_changed) {
@@ -157,74 +144,70 @@ void TabCtrl::DeleteAllItems()
 
 unsigned int TabCtrl::GetCount() const { return btns.size(); }
 
-wxString TabCtrl::GetItemText(unsigned int item) const
-{
-    return item < btns.size() ? btns[item]->GetLabel() : wxString{};
-}
+wxString TabCtrl::GetItemText(unsigned int item) const { return item < btns.size() ? btns[item]->GetLabel() : wxString{}; }
 
-void TabCtrl::SetItemText(unsigned int item, wxString const &value)
+void TabCtrl::SetItemText(unsigned int item, wxString const& value)
 {
-    if (item >= btns.size()) return;
+    if (item >= btns.size())
+        return;
     btns[item]->SetLabel(value);
 }
 
 bool TabCtrl::GetItemBold(unsigned int item) const
 {
-    if (item >= btns.size()) return false;
+    if (item >= btns.size())
+        return false;
     return btns[item]->GetFont() == bold;
 }
 
 void TabCtrl::SetItemBold(unsigned int item, bool bold)
 {
-    if (item >= btns.size()) return;
+    if (item >= btns.size())
+        return;
     btns[item]->SetFont(bold ? this->bold : GetFont());
     btns[item]->Rescale();
 }
 
 void* TabCtrl::GetItemData(unsigned int item) const
 {
-    if (item >= btns.size()) return nullptr;
+    if (item >= btns.size())
+        return nullptr;
     return btns[item]->GetClientData();
 }
 
 void TabCtrl::SetItemData(unsigned int item, void* clientData)
 {
-    if (item >= btns.size()) return;
+    if (item >= btns.size())
+        return;
     btns[item]->SetClientData(clientData);
 }
 
 void TabCtrl::AssignImageList(wxImageList* imageList)
 {
-    if (images == imageList) return;
+    if (images == imageList)
+        return;
     delete images;
     images = imageList;
 }
 
-void TabCtrl::SetItemTextColour(unsigned int item, const StateColor &col)
+void TabCtrl::SetItemTextColour(unsigned int item, const StateColor& col)
 {
-    if (item >= btns.size()) return;
+    if (item >= btns.size())
+        return;
     btns[item]->SetTextColor(col);
 }
 
-int TabCtrl::GetFirstVisibleItem() const
-{
-    return btns.size() == 0 ? -1 : 0;
-}
+int TabCtrl::GetFirstVisibleItem() const { return btns.size() == 0 ? -1 : 0; }
 
-int TabCtrl::GetNextVisible(int item) const
-{
-    return ++item < btns.size() ? item : -1;
-}
+int TabCtrl::GetNextVisible(int item) const { return ++item < btns.size() ? item : -1; }
 
-bool TabCtrl::IsVisible(unsigned int item) const
-{
-    return true;
-}
+bool TabCtrl::IsVisible(unsigned int item) const { return true; }
 
 void TabCtrl::DoSetSize(int x, int y, int width, int height, int sizeFlags)
 {
     wxWindow::DoSetSize(x, y, width, height, sizeFlags);
-    if (sizeFlags & wxSIZE_USE_EXISTING) return;
+    if (sizeFlags & wxSIZE_USE_EXISTING)
+        return;
     relayout();
 }
 
@@ -232,7 +215,9 @@ void TabCtrl::DoSetSize(int x, int y, int width, int height, int sizeFlags)
 
 WXLRESULT TabCtrl::MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam)
 {
-    if (nMsg == WM_GETDLGCODE) { return DLGC_WANTARROWS; }
+    if (nMsg == WM_GETDLGCODE) {
+        return DLGC_WANTARROWS;
+    }
     return wxWindow::MSWWindowProc(nMsg, wParam, lParam);
 }
 
@@ -241,8 +226,8 @@ WXLRESULT TabCtrl::MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam)
 void TabCtrl::relayout()
 {
     int offset = 10;
-    int item = sel + 1;
-    int first = 0;
+    int item   = sel + 1;
+    int first  = 0;
     for (int i = 0; i < item; ++i)
         offset += btns[i]->GetMinSize().x + TAB_BUTTON_SPACE * 2;
     if (item < btns.size())
@@ -271,14 +256,14 @@ void TabCtrl::relayout()
         sizer->GetItem(i * 2 + 2)->SetMinSize({0, 0});
     }
     if (item >= btns.size())
-        -- item;
+        --item;
     // Keep spacing 2 ~ 10 TAB_BUTTON_SPACE
     int b = GetSize().x - offset - 10 - (item + 1 - first) * TAB_BUTTON_SPACE * 8;
     sizer->GetItem(item * 2 + 2)->SetMinSize({b > 0 ? b : 0, 0});
     sizer->Layout();
 }
 
-void TabCtrl::buttonClicked(wxCommandEvent &event)
+void TabCtrl::buttonClicked(wxCommandEvent& event)
 {
     SetFocus();
     auto btn  = event.GetEventObject();
@@ -286,7 +271,7 @@ void TabCtrl::buttonClicked(wxCommandEvent &event)
     SelectItem(iter == btns.end() ? -1 : iter - btns.begin());
 }
 
-void TabCtrl::keyDown(wxKeyEvent &event)
+void TabCtrl::keyDown(wxKeyEvent& event)
 {
     switch (event.GetKeyCode()) {
     case WXK_UP:
@@ -304,12 +289,14 @@ void TabCtrl::keyDown(wxKeyEvent &event)
 
 void TabCtrl::doRender(wxDC& dc)
 {
-    wxSize size = GetSize();
-    int states = state_handler.states();
-    if (sel < 0) { return; }
+    wxSize size   = GetSize();
+    int    states = state_handler.states();
+    if (sel < 0) {
+        return;
+    }
 
-    auto x1 = btns[sel]->GetPosition().x;
-    auto x2 = x1 + btns[sel]->GetSize().x;
+    auto      x1  = btns[sel]->GetPosition().x;
+    auto      x2  = x1 + btns[sel]->GetSize().x;
     const int BS2 = (1 + border_width) / 2;
 #if 0
     const int BS = border_width / 2;
@@ -328,7 +315,7 @@ void TabCtrl::doRender(wxDC& dc)
 #else
     dc.SetPen(wxPen(border_color.colorForStates(states), border_width));
     dc.DrawLine(0, size.y - BS2, size.x, size.y - BS2);
-    wxColour c("#009688"); // ORCA selected tab underline stroke color
+    wxColour c("#009688"); // ADARTYS selected tab underline stroke color
     dc.SetPen(wxPen(c, 1));
     dc.SetBrush(c);
     dc.DrawRoundedRectangle(x1 - radius, size.y - BS2 - border_width * 3, x2 + radius * 2 - x1, border_width * 3, radius);
