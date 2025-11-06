@@ -8,6 +8,7 @@
 #include "../wxExtensions.hpp"
 #include "../I18N.hpp"
 #include "../GUI.hpp"
+#include "../AppColors.hpp"
 
 namespace Slic3r { namespace GUI {
 SideToolsPanel::SideToolsPanel(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size)
@@ -500,8 +501,8 @@ void SideTools::show_status(int status)
     } else if ((status & (int) MonitorStatus::MONITOR_CONNECTING) != 0) {
         m_hyperlink->Hide();
         m_connection_info->SetLabel(_L("Connecting..."));
-        m_connection_info->SetBackgroundColor(0x009688);
-        m_connection_info->SetBorderColor(0x009688);
+        m_connection_info->SetBackgroundColor(ADARTYS_PRIMARY_HEX);
+        m_connection_info->SetBorderColor(ADARTYS_PRIMARY_HEX);
         m_connection_info->Show();
         m_more_button->Hide();
         m_side_error_panel->Hide();

@@ -7,10 +7,11 @@
 #include "GUI.hpp"
 #include "GUI_App.hpp"
 #include "libslic3r/Thread.hpp"
+#include "AppColors.hpp"
 
 namespace Slic3r { namespace GUI {
 
-static const wxColour TEXT_NORMAL_CLR = wxColour(0, 150, 136);
+static const wxColour TEXT_NORMAL_CLR = wxColour(ADARTYS_PRIMARY_RGB);
 static const wxColour TEXT_FAILED_CLR = wxColour(255, 111, 0);
 
 static const std::unordered_map<wxString, wxString> ACCESSORY_DISPLAY_STR = {
@@ -218,11 +219,11 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
     m_button_upgrade_firmware = new Button(this, _L("Update firmware"));
     StateColor btn_bg(std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Disabled),
                       std::pair<wxColour, int>(wxColour(0, 137, 123), StateColor::Pressed),
-                      std::pair<wxColour, int>(wxColour(38, 166, 154), StateColor::Hovered),
-                      std::pair<wxColour, int>(wxColour(0, 150, 136), StateColor::Enabled),
-                      std::pair<wxColour, int>(wxColour(0, 150, 136), StateColor::Normal));
+                      std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_HOVER_RGB), StateColor::Hovered),
+                      std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_RGB), StateColor::Enabled),
+                      std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_RGB), StateColor::Normal));
     StateColor btn_bd(std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled),
-                      std::pair<wxColour, int>(wxColour(0, 150, 136), StateColor::Enabled));
+                      std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_RGB), StateColor::Enabled));
     StateColor btn_text(std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled),
                         std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Enabled));
     m_button_upgrade_firmware->SetBackgroundColor(btn_bg);

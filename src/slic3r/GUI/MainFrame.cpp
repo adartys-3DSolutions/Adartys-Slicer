@@ -69,6 +69,7 @@
 #include <shellapi.h>
 #endif // _WIN32
 #include <slic3r/GUI/CreatePresetsDialog.hpp>
+#include "AppColors.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -1987,7 +1988,7 @@ void MainFrame::update_side_button_style()
     m_slice_btn->SetBottomColour(wxColour(0x3B4446));*/
     StateColor m_btn_bg_enable = StateColor(std::pair<wxColour, int>(wxColour(0, 137, 123), StateColor::Pressed),
                                             std::pair<wxColour, int>(wxColour(48, 221, 112), StateColor::Hovered),
-                                            std::pair<wxColour, int>(wxColour(0, 150, 136), StateColor::Normal));
+                                            std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_RGB), StateColor::Normal));
 
     // m_publish_btn->SetMinSize(wxSize(FromDIP(125), FromDIP(24)));
     // m_publish_btn->SetCornerRadius(FromDIP(12));

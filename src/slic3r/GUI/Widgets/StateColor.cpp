@@ -1,4 +1,5 @@
 #include "StateColor.hpp"
+#include "../AppColors.hpp"
 #include <cmath>
 
 static bool gDarkMode = false;
@@ -6,7 +7,7 @@ static bool gDarkMode = false;
 static bool operator<(wxColour const& l, wxColour const& r) { return l.GetRGBA() < r.GetRGBA(); }
 
 static std::map<wxColour, wxColour> gDarkColors{
-    {"#009688", "#00675b"}, // rgb(0, 150, 136)    ADARTYS color
+    {ADARTYS_PRIMARY_COLOR, ADARTYS_PRIMARY_COLOR_DARK}, // rgb(137, 36, 16)    ADARTYS color
     {"#1F8EEA", "#2778D2"}, // rgb(31, 142, 234)   ???
     {"#FF6F00", "#D15B00"}, // rgb(255, 111, 0)    Secondary color
     {"#D01B1B", "#BB2A3A"}, // rgb(208, 27, 27)    ???
@@ -44,8 +45,8 @@ static std::map<wxColour, wxColour> gDarkColors{
     {"#D9D9D9", "#2D2D32"}, // rgb(217, 217, 217)  Sidebar > Toggle button track color
     //{"#F0F0F0", "#4C4C54"},
     // ADARTYS
-    {"#BFE1DE", "#223C3C"}, // rgb(191, 225, 222)  Dropdown checked item background color > ADARTYS color with %25 opacity
-    {"#E5F0EE", "#283232"}, // rgb(229, 240, 238)  Combo / Dropdown focused background color > ADARTYS color with %10 opacity
+    {ADARTYS_PRIMARY_25_OPACITY, ADARTYS_PRIMARY_25_OPACITY_DARK}, // rgb(217, 165, 151)  Dropdown checked item background color > ADARTYS color with %25 opacity
+    {ADARTYS_PRIMARY_10_OPACITY, ADARTYS_PRIMARY_10_OPACITY_DARK}, // rgb(242, 231, 230)  Combo / Dropdown focused background color > ADARTYS color with %10 opacity
 };
 
 std::tuple<double, double, double> StateColor::GetLAB(const wxColour& color)

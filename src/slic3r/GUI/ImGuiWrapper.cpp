@@ -42,6 +42,7 @@
 #include <nanosvg/nanosvgrast.h>
 #include "OpenGLManager.hpp"
 #include "GUI_App.hpp"
+#include "AppColors.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -2661,7 +2662,7 @@ void ImGuiWrapper::push_radio_style()
                               to_ImVec4(decode_color_to_float_array("#00675b"))); // ADARTYS use adartys color for radio buttons
     } else {
         ImGui::PushStyleColor(ImGuiCol_CheckMark,
-                              to_ImVec4(decode_color_to_float_array("#009688"))); // ADARTYS use adartys color for radio buttons
+                              to_ImVec4(decode_color_to_float_array(ADARTYS_PRIMARY_COLOR))); // ADARTYS use adartys color for radio buttons
     }
 }
 

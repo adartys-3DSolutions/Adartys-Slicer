@@ -9,6 +9,7 @@
 #include <wx/dcgraph.h>
 #include "CalibUtils.hpp"
 #include "../Utils/ColorSpaceConvert.hpp"
+#include "AppColors.hpp"
 namespace Slic3r { namespace GUI {
 
 wxDEFINE_EVENT(EVT_SELECTED_COLOR, wxCommandEvent);
@@ -69,10 +70,10 @@ void AMSMaterialsSetting::create()
 
     m_button_confirm = new Button(this, _L("Confirm"));
     m_btn_bg_green   = StateColor(std::pair<wxColour, int>(wxColour(0, 137, 123), StateColor::Pressed),
-                                std::pair<wxColour, int>(wxColour(38, 166, 154), StateColor::Hovered),
-                                std::pair<wxColour, int>(wxColour(0, 150, 136), StateColor::Normal));
+                                std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_HOVER_RGB), StateColor::Hovered),
+                                std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_RGB), StateColor::Normal));
     m_button_confirm->SetBackgroundColor(m_btn_bg_green);
-    m_button_confirm->SetBorderColor(wxColour(0, 150, 136));
+    m_button_confirm->SetBorderColor(wxColour(ADARTYS_PRIMARY_RGB));
     m_button_confirm->SetTextColor(wxColour("#FFFFFE"));
     m_button_confirm->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
     m_button_confirm->SetCornerRadius(FromDIP(12));
@@ -181,7 +182,7 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
     m_readonly_filament = new TextInput(parent, wxEmptyString, "", "", wxDefaultPosition, AMS_MATERIALS_SETTING_COMBOX_WIDTH,
                                         wxTE_READONLY | wxRIGHT);
     m_readonly_filament->SetBorderColor(StateColor(std::make_pair(0xDBDBDB, (int) StateColor::Focused),
-                                                   std::make_pair(0x009688, (int) StateColor::Hovered),
+                                                   std::make_pair(ADARTYS_PRIMARY_HEX, (int) StateColor::Hovered),
                                                    std::make_pair(0xDBDBDB, (int) StateColor::Normal)));
     m_readonly_filament->SetFont(::Label::Body_14);
     m_readonly_filament->SetLabelColor(AMS_MATERIALS_SETTING_GREY800);
@@ -1107,7 +1108,7 @@ void AMSMaterialsSetting::on_select_filament(wxCommandEvent& evt)
         return;
     } else {
         m_button_confirm->SetBackgroundColor(m_btn_bg_green);
-        m_button_confirm->SetBorderColor(wxColour(0, 150, 136));
+        m_button_confirm->SetBorderColor(wxColour(ADARTYS_PRIMARY_RGB));
         m_button_confirm->SetTextColor(wxColour("#FFFFFE"));
         m_button_confirm->Enable(true);
     }

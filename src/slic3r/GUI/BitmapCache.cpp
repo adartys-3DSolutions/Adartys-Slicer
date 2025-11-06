@@ -18,6 +18,7 @@
 #include "nanosvg/nanosvg.h"
 #define NANOSVGRAST_IMPLEMENTATION
 #include "nanosvg/nanosvgrast.h"
+#include "AppColors.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -357,7 +358,7 @@ wxBitmap* BitmapCache::load_svg(const std::string& bitmap_name,
     }
 
     if (strstr(bitmap_name.c_str(), "toggle_on") != NULL && dark_mode) // ADARTYS only replace color of toggle button
-        replaces["#009688"] = "#00675b";
+        replaces[ADARTYS_PRIMARY_COLOR] = "#00675b";
 
     // if (!new_color.empty())
     //    replaces["\"#ED6B21\""] = "\"" + new_color + "\"";

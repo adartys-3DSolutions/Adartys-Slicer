@@ -7,6 +7,7 @@
 #include "GUI.hpp"
 #include "GUI_App.hpp"
 #include "I18N.hpp"
+#include "AppColors.hpp"
 
 wxDEFINE_EVENT(EVT_WIPE_TOWER_CHART_CHANGED, wxCommandEvent);
 
@@ -54,7 +55,7 @@ void Chart::draw()
     }
 
     // draw draggable buttons
-    dc.SetBrush(StateColor::darkModeColorFor(wxColour("#009688"))); // adartys color for draggable circles
+    dc.SetBrush(StateColor::darkModeColorFor(wxColour(ADARTYS_PRIMARY_COLOR))); // adartys color for draggable circles
     dc.SetPen(wxPen(StateColor::darkModeColorFor(wxColour("#363636")), 1));
     for (auto& button : m_buttons)
         // dc.DrawRectangle(math_to_screen(button.get_pos())-wxPoint(side/2.,side/2.), wxSize(side,side));

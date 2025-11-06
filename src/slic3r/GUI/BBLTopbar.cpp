@@ -12,6 +12,7 @@
 #include "PartPlate.hpp"
 
 #include <boost/log/trivial.hpp>
+#include "AppColors.hpp"
 
 #define TOPBAR_ICON_SIZE 18
 #define TOPBAR_TITLE_WIDTH 300
@@ -115,24 +116,24 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
 
     if (!(item.GetState() & wxAUI_BUTTON_STATE_DISABLED)) {
         if (item.GetState() & wxAUI_BUTTON_STATE_PRESSED) {
-            dc.SetPen(wxPen(StateColor::darkModeColorFor("#009688")));     // ADARTYS
-            dc.SetBrush(wxBrush(StateColor::darkModeColorFor("#009688"))); // ADARTYS
+            dc.SetPen(wxPen(StateColor::darkModeColorFor(ADARTYS_PRIMARY_COLOR)));     // ADARTYS
+            dc.SetBrush(wxBrush(StateColor::darkModeColorFor(ADARTYS_PRIMARY_COLOR))); // ADARTYS
             dc.DrawRectangle(rect);
         } else if ((item.GetState() & wxAUI_BUTTON_STATE_HOVER) || item.IsSticky()) {
-            dc.SetPen(wxPen(StateColor::darkModeColorFor("#009688")));     // ADARTYS
-            dc.SetBrush(wxBrush(StateColor::darkModeColorFor("#009688"))); // ADARTYS
+            dc.SetPen(wxPen(StateColor::darkModeColorFor(ADARTYS_PRIMARY_COLOR)));     // ADARTYS
+            dc.SetBrush(wxBrush(StateColor::darkModeColorFor(ADARTYS_PRIMARY_COLOR))); // ADARTYS
 
             // draw an even lighter background for checked item hovers (since
             // the hover background is the same color as the check background)
             if (item.GetState() & wxAUI_BUTTON_STATE_CHECKED)
-                dc.SetBrush(wxBrush(StateColor::darkModeColorFor("#009688"))); // ADARTYS
+                dc.SetBrush(wxBrush(StateColor::darkModeColorFor(ADARTYS_PRIMARY_COLOR))); // ADARTYS
 
             dc.DrawRectangle(rect);
         } else if (item.GetState() & wxAUI_BUTTON_STATE_CHECKED) {
             // it's important to put this code in an else statement after the
             // hover, otherwise hovers won't draw properly for checked items
-            dc.SetPen(wxPen(StateColor::darkModeColorFor("#009688")));     // ADARTYS
-            dc.SetBrush(wxBrush(StateColor::darkModeColorFor("#009688"))); // ADARTYS
+            dc.SetPen(wxPen(StateColor::darkModeColorFor(ADARTYS_PRIMARY_COLOR)));     // ADARTYS
+            dc.SetBrush(wxBrush(StateColor::darkModeColorFor(ADARTYS_PRIMARY_COLOR))); // ADARTYS
             dc.DrawRectangle(rect);
         }
     }

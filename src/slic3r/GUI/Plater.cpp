@@ -154,6 +154,7 @@
 #include "FileArchiveDialog.hpp"
 #include "StepMeshDialog.hpp"
 #include "CloneDialog.hpp"
+#include "AppColors.hpp"
 
 using boost::optional;
 namespace fs = boost::filesystem;
@@ -1085,7 +1086,7 @@ Sidebar::Sidebar(Plater* parent) : wxPanel(parent, wxID_ANY, wxDefaultPosition, 
                 e.Skip();
                 return;
             }
-            p->m_search_bar->SetBorderColor(wxColour("#009688"));
+            p->m_search_bar->SetBorderColor(wxColour(ADARTYS_PRIMARY_COLOR));
             wxPoint pos = this->p->m_search_bar->ClientToScreen(wxPoint(0, 0));
 #ifndef __WXGTK__
             pos.y += this->p->m_search_bar->GetRect().height;

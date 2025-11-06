@@ -5,6 +5,7 @@
 #include <wx/dcclient.h>
 #include <wx/settings.h>
 #include <boost/log/trivial.hpp>
+#include "../AppColors.hpp"
 
 
 wxFont Label::sysFont(int size, bool bold)
@@ -300,7 +301,7 @@ void Label::SetWindowStyleFlag(long style)
     wxStaticText::SetWindowStyleFlag(style);
     if (style & LB_HYPERLINK) {
         this->m_color = GetForegroundColour();
-        static wxColor clr_url("#009688");
+        static wxColor clr_url(ADARTYS_PRIMARY_COLOR);
         SetFont(this->m_font.Underlined());
         SetForegroundColour(clr_url);
         SetCursor(wxCURSOR_HAND);

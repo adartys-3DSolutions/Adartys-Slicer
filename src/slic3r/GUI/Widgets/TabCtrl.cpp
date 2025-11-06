@@ -1,6 +1,7 @@
 #include "TabCtrl.hpp"
 
 #include <wx/dc.h>
+#include "../AppColors.hpp"
 
 wxDEFINE_EVENT(wxEVT_TAB_SEL_CHANGING, wxCommandEvent);
 wxDEFINE_EVENT(wxEVT_TAB_SEL_CHANGED, wxCommandEvent);
@@ -315,7 +316,7 @@ void TabCtrl::doRender(wxDC& dc)
 #else
     dc.SetPen(wxPen(border_color.colorForStates(states), border_width));
     dc.DrawLine(0, size.y - BS2, size.x, size.y - BS2);
-    wxColour c("#009688"); // ADARTYS selected tab underline stroke color
+    wxColour c(ADARTYS_PRIMARY_COLOR); // ADARTYS selected tab underline stroke color
     dc.SetPen(wxPen(c, 1));
     dc.SetBrush(c);
     dc.DrawRoundedRectangle(x1 - radius, size.y - BS2 - border_width * 3, x2 + radius * 2 - x1, border_width * 3, radius);

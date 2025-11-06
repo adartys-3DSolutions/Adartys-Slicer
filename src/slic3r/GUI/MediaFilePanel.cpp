@@ -17,6 +17,7 @@
 #endif
 #ifdef __APPLE__
 #include "../Utils/MacDarkMode.hpp"
+#include "AppColors.hpp"
 #endif
 
 namespace Slic3r { namespace GUI {
@@ -111,11 +112,11 @@ MediaFilePanel::MediaFilePanel(wxWindow* parent)
     m_button_delete->SetBorderColorNormal(wxColor("#FF6F00"));
     m_button_delete->SetTextColorNormal(wxColor("#FF6F00"));
     m_button_management->SetBorderWidth(0);
-    m_button_management->SetBackgroundColorNormal(wxColor("#009688"));
+    m_button_management->SetBackgroundColorNormal(wxColor(ADARTYS_PRIMARY_COLOR));
     m_button_management->SetTextColorNormal(*wxWHITE);
     m_button_management->Enable(false);
     m_button_refresh->SetBorderWidth(0);
-    m_button_refresh->SetBackgroundColorNormal(wxColor("#009688"));
+    m_button_refresh->SetBackgroundColorNormal(wxColor(ADARTYS_PRIMARY_COLOR));
     m_button_refresh->SetTextColorNormal(*wxWHITE);
     m_button_refresh->Enable(false);
 

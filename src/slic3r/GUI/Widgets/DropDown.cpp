@@ -4,6 +4,7 @@
 #include <wx/display.h>
 #include <wx/dcbuffer.h>
 #include <wx/dcgraph.h>
+#include "../AppColors.hpp"
 
 #ifdef __WXGTK__
 #include <gtk/gtk.h>
@@ -37,8 +38,8 @@ DropDown::DropDown(std::vector<wxString>& texts, std::vector<wxString>& tips, st
     , state_handler(this)
     , border_color(0xDBDBDB)
     , text_color(0x363636)
-    , selector_border_color(std::make_pair(0x009688, (int) StateColor::Hovered), std::make_pair(*wxWHITE, (int) StateColor::Normal))
-    , selector_background_color(std::make_pair(0xBFE1DE, (int) StateColor::Checked), // ADARTYS updated background color for checked item
+    , selector_border_color(std::make_pair(ADARTYS_PRIMARY_HEX, (int) StateColor::Hovered), std::make_pair(*wxWHITE, (int) StateColor::Normal))
+    , selector_background_color(std::make_pair(ADARTYS_PRIMARY_25_OPACITY_HEX, (int) StateColor::Checked), // ADARTYS background color for checked item (25% opacity)
                                 std::make_pair(*wxWHITE, (int) StateColor::Normal))
 {}
 

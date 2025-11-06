@@ -2,6 +2,7 @@
 #include "Label.hpp"
 
 #include <wx/dcgraph.h>
+#include "../AppColors.hpp"
 
 BEGIN_EVENT_TABLE(ComboBox, TextInput)
 
@@ -51,11 +52,11 @@ ComboBox::ComboBox(wxWindow*       parent,
         GetTextCtrl()->Hide();
         TextInput::SetFont(Label::Body_14);
         TextInput::SetBorderColor(StateColor(std::make_pair(0xDBDBDB, (int) StateColor::Disabled),
-                                             std::make_pair(0x009688, (int) StateColor::Hovered),
+                                             std::make_pair(ADARTYS_PRIMARY_HEX, (int) StateColor::Hovered),
                                              std::make_pair(0xDBDBDB, (int) StateColor::Normal)));
         TextInput::SetBackgroundColor(
             StateColor(std::make_pair(0xF0F0F1, (int) StateColor::Disabled),
-                       std::make_pair(0xE5F0EE, (int) StateColor::Focused), // ADARTYS updated background color for focused item
+                       std::make_pair(ADARTYS_PRIMARY_10_OPACITY_HEX, (int) StateColor::Focused), // ADARTYS background color for focused item (10% opacity)
                        std::make_pair(*wxWHITE, (int) StateColor::Normal)));
         TextInput::SetLabelColor(
             StateColor(std::make_pair(0x6B6B6B, (int) StateColor::Disabled), // ADARTYS: Use same color for disabled text on combo boxes

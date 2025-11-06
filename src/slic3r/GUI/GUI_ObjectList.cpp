@@ -39,6 +39,7 @@
 #include <wx/renderer.h>
 #endif /* __WXMSW__ */
 #include "Gizmos/GLGizmoScale.hpp"
+#include "AppColors.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -80,7 +81,7 @@ public:
     }
     virtual void DrawFocusRect(wxWindow* win, wxDC& dc, const wxRect& rect, int flags = 0) override
     { // ADARTYS draw focus rectangle to improve consistency between platforms
-        dc.SetPen(StateColor::darkModeColorFor(wxColour("#009688")));
+        dc.SetPen(StateColor::darkModeColorFor(wxColour(ADARTYS_PRIMARY_COLOR)));
         dc.DrawRectangle(rect);
     }
     virtual void DrawTreeItemButton(wxWindow* win, wxDC& dc, const wxRect& rect, int flags = 0) override
