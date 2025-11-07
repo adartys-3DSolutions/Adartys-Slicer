@@ -2,7 +2,7 @@
 
 set -e
 set -o pipefail
-export CMAKE_IGNORE_PATH="/usr/X11R6:/opt/X11"
+export CMAKE_IGNORE_PATH="/usr/X11R6:/opt/X11:/opt/homebrew/lib/cmake/zstd:/opt/homebrew"
 
 while getopts ":dpa:snt:xbc:1h" opt; do
   case "${opt}" in

@@ -283,6 +283,7 @@ include(OpenCSG/OpenCSG.cmake)
 
 include(TBB/TBB.cmake)
 
+include(Zstd/Zstd.cmake)
 include(Blosc/Blosc.cmake)
 include(OpenEXR/OpenEXR.cmake)
 include(OpenVDB/OpenVDB.cmake)
@@ -351,6 +352,7 @@ include(OCCT/OCCT.cmake)
 include(OpenCV/OpenCV.cmake)
 
 set(_dep_list
+    dep_Zstd
     dep_Boost
     dep_TBB
     ${OPENSSL_PKG}
