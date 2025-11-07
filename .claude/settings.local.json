@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(find:*)",
-      "Read(//private/tmp/**)"
+      "Read(//private/tmp/**)",
+      "Bash(./build_release_macos.sh:*)",
+      "Bash(while ps aux)",
+      "Bash(do sleep 30)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

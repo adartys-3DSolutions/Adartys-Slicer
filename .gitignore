@@ -39,3 +39,6 @@ src/AdartysSlicer-doc/
 resources/profiles/user/default
 *.code-workspace
 deps_src/build/
+NOTARISIERUNG.md
+notarize_adartys.sh
+AdartysSlicer*.dmg
