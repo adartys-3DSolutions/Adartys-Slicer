@@ -270,6 +270,8 @@ if (NOT EXPAT_FOUND)
     set(EXPAT_PKG dep_EXPAT)
 endif ()
 
+include(Zstd/Zstd.cmake)
+
 set(DEP_Boost_COMPONENTS system iostreams filesystem thread log locale regex date_time)
 include(Boost/Boost.cmake)
 
@@ -282,8 +284,6 @@ include(GLFW/GLFW.cmake)
 include(OpenCSG/OpenCSG.cmake)
 
 include(TBB/TBB.cmake)
-
-include(Zstd/Zstd.cmake)
 include(Blosc/Blosc.cmake)
 include(OpenEXR/OpenEXR.cmake)
 include(OpenVDB/OpenVDB.cmake)

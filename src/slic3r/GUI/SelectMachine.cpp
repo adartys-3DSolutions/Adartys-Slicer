@@ -289,7 +289,7 @@ SelectMachineDialog::SelectMachineDialog(Plater* plater)
     m_comboBox_printer->SetMaxSize(wxSize(FromDIP(300), -1));
     m_comboBox_printer->Bind(wxEVT_COMBOBOX, &SelectMachineDialog::on_selection_changed, this);
 
-    m_btn_bg_enable = StateColor(std::pair<wxColour, int>(wxColour(0, 137, 123), StateColor::Pressed),
+    m_btn_bg_enable = StateColor(std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_RGB), StateColor::Pressed),
                                  std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_HOVER_RGB), StateColor::Hovered),
                                  std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_RGB), StateColor::Normal));
 

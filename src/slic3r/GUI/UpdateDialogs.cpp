@@ -132,7 +132,7 @@ MsgUpdateConfig::MsgUpdateConfig(const std::vector<Update>& updates, bool force_
     auto sizer_button = new wxBoxSizer(wxHORIZONTAL);
     sizer_button->Add(0, 0, 1, wxEXPAND, 5);
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(0, 137, 123), StateColor::Pressed),
+    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_RGB), StateColor::Pressed),
                             std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_HOVER_RGB), StateColor::Hovered),
                             std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
 

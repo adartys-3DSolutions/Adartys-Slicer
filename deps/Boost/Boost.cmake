@@ -20,6 +20,5 @@ adartysslicer_add_cmake_project(Boost
         -DBUILD_TESTING:BOOL=OFF
         "${_context_abi_line}"
         "${_context_arch_line}"
+    DEPENDS dep_Zstd
 )
-
-set(DEP_Boost_DEPENDS ZLIB)

@@ -448,7 +448,7 @@ void PrintingTaskPanel::create_panel(wxWindow* parent)
     m_request_failed_info->SetFont(::Label::Body_10);
     static_request_failed_panel_sizer->Add(m_request_failed_info, 0, wxEXPAND | wxALL, FromDIP(10));
     StateColor btn_bg_green(std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Disabled),
-                            std::pair<wxColour, int>(wxColour(0, 137, 123), StateColor::Pressed),
+                            std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_RGB), StateColor::Pressed),
                             std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_HOVER_RGB), StateColor::Hovered),
                             std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
     StateColor btn_bd_green(std::pair<wxColour, int>(AMS_CONTROL_WHITE_COLOUR, StateColor::Disabled),
@@ -1074,7 +1074,7 @@ wxBoxSizer* StatusBasePanel::create_machine_control_page(wxWindow* parent)
     m_staticText_control->SetForegroundColour(PAGE_TITLE_FONT_COL);
 
     StateColor btn_bg_green(std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Disabled),
-                            std::pair<wxColour, int>(wxColour(0, 137, 123), StateColor::Pressed),
+                            std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_RGB), StateColor::Pressed),
                             std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_HOVER_RGB), StateColor::Hovered),
                             std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
     StateColor btn_bd_green(std::pair<wxColour, int>(AMS_CONTROL_WHITE_COLOUR, StateColor::Disabled),
@@ -4873,7 +4873,7 @@ wxBoxSizer* ScoreDialog::get_button_sizer()
     wxBoxSizer* bSizer_button = new wxBoxSizer(wxHORIZONTAL);
     bSizer_button->Add(0, 0, 1, wxEXPAND, 0);
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(0, 137, 123), StateColor::Pressed),
+    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_RGB), StateColor::Pressed),
                             std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_HOVER_RGB), StateColor::Hovered),
                             std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
 

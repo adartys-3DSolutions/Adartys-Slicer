@@ -11,6 +11,9 @@ Adjust svg colors
 python3 tools/AdjustSVGColors.py
 ## MacOS
 
-CMAKE_IGNORE_PATH="/usr/X11R6:/opt/X11" ./build_release_macos.sh -s
+# Wenn sdk sich geändert hat
+rm -rf /Users/littwin/Documents/Projekte/Customers/Smolsys/Adartys-Slicer/deps/build/arm64 /Users/littwin/Documents/Projekte/Customers/Smolsys/Adartys-Slicer/build/arm64
+./build_release_macos.sh -s
+open /Users/littwin/Documents/Projekte/Customers/Smolsys/Adartys-Slicer/build/arm64/AdartysSlicer/AdartysSlicer.app
 
 # Changed files

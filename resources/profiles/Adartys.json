@@ -1,0 +1,98 @@
+{
+    "name": "Adartys",
+    "version": "02.03.01.10",
+    "force_update": "0",
+    "description": "Adartys configurations",
+    "machine_model_list": [
+        {
+            "name": "Adartys Dental100",
+            "sub_path": "machine/adartys Dental100.json"
+        }
+    ],
+    "machine_list": [
+        {
+            "name": "fdm_machine_common",
+            "sub_path": "machine/fdm_machine_common.json"
+        },
+        {
+            "name": "Adartys Dental100 - 0.4 nozzle",
+            "sub_path": "machine/adartys Dental100 - 0.4 nozzle.json"
+        }
+    ],
+    "process_list": [
+        {
+            "name": "fdm_process_common",
+            "sub_path": "process/fdm_process_common.json"
+        },
+        {
+            "name": "adartys FILMO light brown 0.25 fine",
+            "sub_path": "process/adartys FILMO light brown 0.25 fine.json"
+        },
+        {
+            "name": "adartys FILMO white 0.25 fine",
+            "sub_path": "process/adartys FILMO white 0.25 fine.json"
+        },
+        {
+            "name": "adartys FILMO white 0.4 fine",
+            "sub_path": "process/adartys FILMO white 0.4 fine.json"
+        },
+        {
+            "name": "adartys FILMO white 0.4 speed",
+            "sub_path": "process/adartys FILMO white 0.4 speed.json"
+        },
+        {
+            "name": "adartys FILPRO 0.25 Noozle",
+            "sub_path": "process/adartys FILPRO 0.25 Noozle.json"
+        },
+        {
+            "name": "adartys FILPRO 0.4 Noozle",
+            "sub_path": "process/adartys FILPRO 0.4 Noozle.json"
+        },
+        {
+            "name": "IGUS Gear",
+            "sub_path": "process/IGUS Gear.json"
+        }
+    ],
+    "filament_list": [
+        {
+            "name": "fdm_filament_common",
+            "sub_path": "filament/fdm_filament_common.json"
+        },
+        {
+            "name": "fdm_filament_pla",
+            "sub_path": "filament/fdm_filament_pla.json"
+        },
+        {
+            "name": "FILMO White",
+            "sub_path": "filament/FILMO White.json"
+        },
+        {
+            "name": "FILMO White 0.25",
+            "sub_path": "filament/FILMO White 0.25.json"
+        },
+        {
+            "name": "FILMO White Düse 0.4",
+            "sub_path": "filament/FILMO White Düse 0.4.json"
+        },
+        {
+            "name": "FILMO White Düse 0.4 HF",
+            "sub_path": "filament/FILMO White Düse 0.4 HF.json"
+        },
+        {
+            "name": "FILMO light brown 0.25",
+            "sub_path": "filament/FILMO light brown 0.25.json"
+        },
+        {
+            "name": "FILPRO - Rosa",
+            "sub_path": "filament/FILPRO - Rosa.json"
+        },
+        {
+            "name": "FILPRO - tooth",
+            "sub_path": "filament/FILPRO - tooth.json"
+        },
+        {
+            "name": "IGUS",
+            "sub_path": "filament/IGUS.json"
+        }
+    ]
+}

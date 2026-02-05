@@ -1,0 +1,39 @@
+{
+    "type": "filament",
+    "filament_id": "AD01flb0",
+    "compatible_printers": [
+        "Adartys Dental100 - 0.4 nozzle"
+    ],
+    "default_filament_colour": [
+        "#FFE4B6"
+    ],
+    "dont_slow_down_outer_wall": [
+        "1"
+    ],
+    "fan_cooling_layer_time": [
+        "30"
+    ],
+    "fan_max_speed": [
+        "35"
+    ],
+    "fan_min_speed": [
+        "35"
+    ],
+    "filament_flow_ratio": [
+        "0.85"
+    ],
+    "filament_settings_id": [
+        "FILMO light brown 0.25"
+    ],
+    "from": "system",
+    "inherits": "FILMO White",
+    "instantiation": "true",
+    "name": "FILMO light brown 0.25",
+    "nozzle_temperature": [
+        "195"
+    ],
+    "slow_down_layer_time": [
+        "4"
+    ],
+    "version": "0.0.0.0"
+}

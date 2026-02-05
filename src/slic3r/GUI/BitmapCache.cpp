@@ -338,8 +338,8 @@ wxBitmap* BitmapCache::load_svg(const std::string& bitmap_name,
 
     // map of color replaces
     std::map<std::string, std::string> replaces;
-    replaces["\"#0x00AE42\""] = "\"#009688\"";
-    replaces["\"#00FF00\""]   = "\"#52c7b8\"";
+    replaces["\"#0x00AE42\""] = "\"" ADARTYS_PRIMARY_COLOR "\"";
+    replaces["\"#00FF00\""]   = "\"" ADARTYS_PRIMARY_HOVER "\"";
     if (dark_mode) {
         replaces["\"#262E30\""] = "\"#EFEFF0\"";
         replaces["\"#323A3D\""] = "\"#B3B3B5\"";
@@ -349,7 +349,7 @@ wxBitmap* BitmapCache::load_svg(const std::string& bitmap_name,
         replaces["\"#6B6B6B\""] = "\"#818182\"";
         replaces["\"#909090\""] = "\"#FFFFFF\"";
         replaces["\"#00FF00\""] = "\"#FF0000\"";
-        replaces["\"#009688\""] = "\"#00675b\"";
+        replaces["\"#009688\""] = "\"" ADARTYS_PRIMARY_COLOR_DARK "\"";
         replaces["#DBDBDB"]     = "#4A4A51"; // ADARTYS border color
         replaces["#F0F0F1"]     = "#333337"; // ADARTYS disabled background color
         replaces["#262E30"]     = "#EFEFF0"; // ADARTYS
@@ -358,7 +358,7 @@ wxBitmap* BitmapCache::load_svg(const std::string& bitmap_name,
     }
 
     if (strstr(bitmap_name.c_str(), "toggle_on") != NULL && dark_mode) // ADARTYS only replace color of toggle button
-        replaces[ADARTYS_PRIMARY_COLOR] = "#00675b";
+        replaces[ADARTYS_PRIMARY_COLOR] = ADARTYS_PRIMARY_COLOR_DARK;
 
     // if (!new_color.empty())
     //    replaces["\"#ED6B21\""] = "\"" + new_color + "\"";

@@ -255,7 +255,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater* plater)
     m_comboBox_printer->Bind(wxEVT_COMBOBOX, &SendToPrinterDialog::on_selection_changed, this);
 
     m_sizer_printer->Add(m_comboBox_printer, 1, wxEXPAND | wxRIGHT, FromDIP(5));
-    btn_bg_enable = StateColor(std::pair<wxColour, int>(wxColour(0, 137, 123), StateColor::Pressed),
+    btn_bg_enable = StateColor(std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_RGB), StateColor::Pressed),
                                std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_HOVER_RGB), StateColor::Hovered),
                                std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_RGB), StateColor::Normal));
 

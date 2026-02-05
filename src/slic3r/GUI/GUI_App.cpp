@@ -2550,7 +2550,7 @@ please delete installed plugin and try again!");
 
     sidebar().obj_list()->init();
     // sidebar().aux_list()->init_auxiliary();
-    mainframe->m_project->init_auxiliary();
+    // mainframe->m_project->init_auxiliary();
 
     //     update_mode(); // !!! do that later
     SetTopWindow(mainframe);

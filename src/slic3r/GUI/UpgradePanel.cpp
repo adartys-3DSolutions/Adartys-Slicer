@@ -218,7 +218,7 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
 
     m_button_upgrade_firmware = new Button(this, _L("Update firmware"));
     StateColor btn_bg(std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Disabled),
-                      std::pair<wxColour, int>(wxColour(0, 137, 123), StateColor::Pressed),
+                      std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_RGB), StateColor::Pressed),
                       std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_HOVER_RGB), StateColor::Hovered),
                       std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_RGB), StateColor::Enabled),
                       std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_RGB), StateColor::Normal));

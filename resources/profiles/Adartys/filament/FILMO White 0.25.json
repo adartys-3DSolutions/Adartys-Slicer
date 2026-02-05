@@ -1,0 +1,51 @@
+{
+    "type": "filament",
+    "filament_id": "AD01fw25",
+    "compatible_printers": [
+        "Adartys Dental100 - 0.4 nozzle"
+    ],
+    "dont_slow_down_outer_wall": [
+        "1"
+    ],
+    "enable_pressure_advance": [
+        "1"
+    ],
+    "fan_cooling_layer_time": [
+        "30"
+    ],
+    "fan_max_speed": [
+        "35"
+    ],
+    "fan_min_speed": [
+        "35"
+    ],
+    "filament_flow_ratio": [
+        "0.8"
+    ],
+    "filament_retract_before_wipe": [
+        "50%"
+    ],
+    "filament_retraction_length": [
+        "0.5"
+    ],
+    "filament_settings_id": [
+        "FILMO White 0.25"
+    ],
+    "filament_wipe": [
+        "1"
+    ],
+    "filament_wipe_distance": [
+        "2"
+    ],
+    "from": "system",
+    "inherits": "FILMO White",
+    "instantiation": "true",
+    "name": "FILMO White 0.25",
+    "pressure_advance": [
+        "0"
+    ],
+    "slow_down_layer_time": [
+        "4"
+    ],
+    "version": "0.0.0.0"
+}

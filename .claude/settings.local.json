@@ -6,7 +6,14 @@
       "Bash(./build_release_macos.sh:*)",
       "Bash(while ps aux)",
       "Bash(do sleep 30)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(xcrun:*)",
+      "Bash(bash:*)",
+      "Bash(ls:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(/Users/littwin/Documents/Projekte/Customers/Smolsys/Adartys-Slicer/build/arm64/AdartysSlicer/AdartysSlicer_profile_validator.app/Contents/MacOS/AdartysSlicer_profile_validator:*)",
+      "Bash(./build/arm64/AdartysSlicer_profile_validator:*)",
+      "Bash(\"./build/arm64/AdartysSlicer/AdartysSlicer_profile_validator.app/Contents/MacOS/AdartysSlicer_profile_validator\" -p resources/profiles -v Adartys)"
     ],
     "deny": [],
     "ask": []

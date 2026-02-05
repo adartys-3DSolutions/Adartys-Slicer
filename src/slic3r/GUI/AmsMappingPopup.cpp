@@ -1262,7 +1262,7 @@ void AmsReplaceMaterialDialog::create()
     StateColor btn_text_white(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
                               std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(0, 137, 123), StateColor::Pressed),
+    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_RGB), StateColor::Pressed),
                             std::pair<wxColour, int>(wxColour(ADARTYS_PRIMARY_RGB), StateColor::Normal));
     m_button_sizer->Add(0, 0, 1, wxEXPAND, 0);
 
