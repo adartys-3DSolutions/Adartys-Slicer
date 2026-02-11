@@ -15,9 +15,9 @@
 #ifdef __WXMSW__
 #include <shellapi.h>
 #endif
+#include "AppColors.hpp"
 #ifdef __APPLE__
 #include "../Utils/MacDarkMode.hpp"
-#include "AppColors.hpp"
 #endif
 
 namespace Slic3r { namespace GUI {
