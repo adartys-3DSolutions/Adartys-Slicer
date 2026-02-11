@@ -1,5 +1,9 @@
 # This is just a notebook for changes done to make this special version
 
+# Downloads
+
+https://smolsys-download.com/downloads/adartys-slicer/AdartysSlicer.dmg
+
 # Compile
 
 ## Update nach abgleich
