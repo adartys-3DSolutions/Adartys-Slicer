@@ -33,7 +33,7 @@ jobs:
     steps:
       # Setup the environment
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           lfs: "true"
 
