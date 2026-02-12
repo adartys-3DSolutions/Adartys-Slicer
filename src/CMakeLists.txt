@@ -147,7 +147,7 @@ target_link_libraries(AdartysSlicer libslic3r_gui)
     if (MSVC)
         # Generate debug symbols even in release mode.
         target_link_options(AdartysSlicer PUBLIC "$<$<CONFIG:RELEASE>:/DEBUG>")
-        target_link_libraries(AdartysSlicer user32.lib Setupapi.lib)
+        target_link_libraries(AdartysSlicer user32.lib Setupapi.lib OpenSSL::SSL OpenSSL::Crypto)
     elseif (MINGW)
         target_link_libraries(AdartysSlicer ws2_32 uxtheme setupapi)
     elseif (APPLE)
@@ -177,6 +177,19 @@ if (WIN32)
     add_dependencies(AdartysSlicer_app_gui AdartysSlicer)
     set_target_properties(AdartysSlicer_app_gui PROPERTIES OUTPUT_NAME "adartys-slicer")
     target_link_libraries(AdartysSlicer_app_gui PRIVATE boost_headeronly)
+
+    # Code signing: Sign the executable after build
+    set(SIGN_TOOL_PATH "C:/Users/lb/Dropbox/Crypted/sign/sign.bat" CACHE FILEPATH "Path to code signing script")
+    if(EXISTS "${SIGN_TOOL_PATH}")
+        add_custom_command(TARGET AdartysSlicer_app_gui POST_BUILD
+            COMMAND "${SIGN_TOOL_PATH}" "$<TARGET_FILE:AdartysSlicer_app_gui>"
+            COMMENT "Code signing adartys-slicer.exe..."
+            VERBATIM
+        )
+        message(STATUS "Code signing enabled for executable: ${SIGN_TOOL_PATH}")
+    else()
+        message(WARNING "Code signing tool not found at: ${SIGN_TOOL_PATH}")
+    endif()
 endif ()
 
 # Link the resources dir to where Slic3r GUI expects it

@@ -545,6 +545,12 @@ find_package(TBB REQUIRED)
 # The Intel TBB library will use the std::exception_ptr feature of C++11.
 # add_definitions(-DTBB_USE_CAPTURED_EXCEPTION=0)
 
+# Force CMake to use OpenSSL from deps on Windows
+if(WIN32)
+    set(OPENSSL_ROOT_DIR "${CMAKE_PREFIX_PATH}")
+    set(OPENSSL_USE_STATIC_LIBS TRUE)
+endif()
+
 find_package(OpenSSL REQUIRED)
 find_package(CURL REQUIRED)
 find_package(Freetype REQUIRED)
@@ -892,4 +898,15 @@ set (CPACK_RESOURCE_FILE_LICENSE ${CMAKE_SOURCE_DIR}/LICENSE.txt) # must also in
 
 set(CPACK_WIX_UPGRADE_GUID "058245e8-20e0-4a95-9ab7-1acfe17ad511")
 set(CPACK_GENERATOR NSIS)
+
+# Code signing configuration for installer
+set(SIGN_TOOL_PATH "C:/Users/lb/Dropbox/Crypted/sign/sign.bat" CACHE FILEPATH "Path to code signing script")
+if(EXISTS "${SIGN_TOOL_PATH}")
+    message(STATUS "Code signing enabled for installer: ${SIGN_TOOL_PATH}")
+    message(STATUS "To create signed installer: Run 'build_and_package.bat'")
+else()
+    message(STATUS "Code signing tool not found. Installer will not be signed automatically.")
+    message(STATUS "To enable: Set SIGN_TOOL_PATH or use 'build_and_package.bat'")
+endif()
+
 include(CPack)

@@ -13,7 +13,15 @@
       "WebFetch(domain:github.com)",
       "Bash(/Users/littwin/Documents/Projekte/Customers/Smolsys/Adartys-Slicer/build/arm64/AdartysSlicer/AdartysSlicer_profile_validator.app/Contents/MacOS/AdartysSlicer_profile_validator:*)",
       "Bash(./build/arm64/AdartysSlicer_profile_validator:*)",
-      "Bash(\"./build/arm64/AdartysSlicer/AdartysSlicer_profile_validator.app/Contents/MacOS/AdartysSlicer_profile_validator\" -p resources/profiles -v Adartys)"
+      "Bash(\"./build/arm64/AdartysSlicer/AdartysSlicer_profile_validator.app/Contents/MacOS/AdartysSlicer_profile_validator\" -p resources/profiles -v Adartys)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(cmd.exe /c \"dir deps\\\\build\\\\*.lib /s /b 2>nul | findstr /i ssl\")",
+      "Bash(powershell -Command:*)",
+      "Bash(cmake --build:*)",
+      "Bash(cmd.exe /c \"dir deps 2>nul\")",
+      "Bash(cmd.exe /c \"dir /s /b deps\\\\build\\\\AdartysSlicer_dep\\\\usr\\\\local\\\\lib 2>nul | findstr /i ssl\")",
+      "Bash(cmd.exe /c \"dir /s /b deps\\\\build\\\\AdartysSlicer_dep\\\\usr\\\\local 2>nul | findstr /i openssl\")"
     ],
     "deny": [],
     "ask": []

@@ -22,8 +22,27 @@ build_release_vs2022.bat deps
 # Build only slicer (after deps are built)
 build_release_vs2022.bat slicer
 
+# Build and create signed installer (includes build + CPack + code signing)
+build_and_package.bat
 
+# Build and create signed installer with debug info
+build_and_package.bat debuginfo
 ```
+
+### Packaging and Code Signing (Windows)
+```bash
+# Create signed installer after build (automatic build + package + sign)
+build_and_package.bat
+
+# Manual packaging and signing (if already built):
+cd build
+cpack -G NSIS -C Release
+call ..\scripts\sign_installer.bat "AdartysSlicer_Windows_Installer_V*.exe"
+```
+
+**Note**: Executable signing happens automatically during build via POST_BUILD commands.
+Installer signing requires either `build_and_package.bat` or manual steps after CPack.
+See [SIGNING.md](SIGNING.md) for detailed code signing documentation.
 
 ### Building on macOS
 ```bash
