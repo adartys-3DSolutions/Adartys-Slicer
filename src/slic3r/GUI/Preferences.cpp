@@ -757,9 +757,9 @@ wxBoxSizer* PreferencesDialog::create_item_darkmode(wxString title, wxString too
         wxGetApp().Update_dark_mode_flag();
 
         // dark mode
-#ifdef _MSW_DARK_MODE
         wxGetApp().force_colors_update();
         wxGetApp().update_ui_from_settings();
+#ifdef _MSW_DARK_MODE
         set_dark_mode();
 #endif
         SimpleEvent evt = SimpleEvent(EVT_GLCANVAS_COLOR_MODE_CHANGED);
@@ -1207,10 +1207,8 @@ void PreferencesDialog::create_items()
     auto item_default_page = create_item_combobox(_L("Default page"), _L("Set the page opened on startup."), "default_page", DefaultPage);
     g_sizer->Add(item_default_page);
 
-#ifdef _WIN32
     auto item_darkmode = create_item_darkmode(_L("Enable dark mode"), "", "dark_color_mode");
     g_sizer->Add(item_darkmode);
-#endif
 
     auto item_single_instance = create_item_checkbox(
         _L("Allow only one AdartysSlicer instance"),

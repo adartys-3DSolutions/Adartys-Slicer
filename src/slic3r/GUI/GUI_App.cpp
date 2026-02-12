@@ -2298,12 +2298,6 @@ bool GUI_App::on_init_inner()
     load_language(wxString(), true);
 #ifdef _MSW_DARK_MODE
 
-#ifndef __WINDOWS__
-    wxSystemAppearance app = wxSystemSettings::GetAppearance();
-    GUI::wxGetApp().app_config->set("dark_color_mode", app.IsDark() ? "1" : "0");
-    GUI::wxGetApp().app_config->save();
-#endif // __APPLE__
-
     bool init_dark_color_mode  = dark_mode();
     bool init_sys_menu_enabled = app_config->get("sys_menu_enabled") == "1";
 #ifdef __WINDOWS__
@@ -2877,17 +2871,7 @@ unsigned GUI_App::get_colour_approx_luma(const wxColour& colour)
 bool GUI_App::dark_mode()
 {
 #ifdef SUPPORT_DARK_MODE
-#if __APPLE__
-    // The check for dark mode returns false positive on 10.12 and 10.13,
-    // which allowed setting dark menu bar and dock area, which is
-    // is detected as dark mode. We must run on at least 10.14 where the
-    // proper dark mode was first introduced.
-    return wxPlatformInfo::Get().CheckOSVersion(10, 14) && mac_dark_mode();
-#else
-    return wxGetApp().app_config->get("dark_color_mode") == "1" ? true : check_dark_mode();
-    // const unsigned luma = get_colour_approx_luma(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
-    // return luma < 128;
-#endif
+    return wxGetApp().app_config->get("dark_color_mode") == "1";
 #else
     // BBS disable DarkUI mode
     return false;
@@ -5313,6 +5297,17 @@ bool GUI_App::load_language(wxString language, bool initial)
                 if (auto info = wxLocale::FindLanguageInfo(lang))
                     m_language_info_system = info;
 #endif
+#if __APPLE__
+                // On macOS, wxLocale::GetSystemLanguage() may not reflect the actual
+                // user language preference (e.g. returns en_GB when system is set to de_DE).
+                // Read the preferred language directly from macOS system preferences.
+                std::string mac_lang = mac_get_preferred_language();
+                if (!mac_lang.empty()) {
+                    if (auto info = wxLocale::FindLanguageInfo(wxString(mac_lang)))
+                        m_language_info_system = info;
+                    BOOST_LOG_TRIVIAL(info) << boost::format("macOS preferred language: %1%") % mac_lang;
+                }
+#endif
                 BOOST_LOG_TRIVIAL(info) << boost::format("System language detected (user locales and such): %1%") %
                                                m_language_info_system->CanonicalName.ToUTF8().data();
                 // BBS set language to app config
@@ -5411,9 +5406,12 @@ bool GUI_App::load_language(wxString language, bool initial)
 #endif
 
     if (!wxLocale::IsAvailable(language_info->Language) && initial) {
-        language_info = wxLocale::GetLanguageInfo(wxLANGUAGE_ENGLISH_UK);
-        app_config->set("language", language_info->CanonicalName.ToUTF8().data());
-    } else if (initial) {
+        // wxLocale::IsAvailable() may return false on macOS even though the translation exists.
+        // Don't override the detected language — just log a warning and continue.
+        BOOST_LOG_TRIVIAL(warning) << boost::format("Locale for %1% is not available on this system, but continuing with translation loading.") %
+                                          language_info->CanonicalName.ToUTF8().data();
+    }
+    if (initial) {
         // bbs supported languages
         // TODO: use a global one with Preference
         // wxLanguage supported_languages[]{
@@ -5448,30 +5446,31 @@ bool GUI_App::load_language(wxString language, bool initial)
     }
 
     if (!wxLocale::IsAvailable(language_info->Language)) {
-        // Loading the language dictionary failed.
-        wxString message = "Switching Adartys Slicer to language " + language_info->CanonicalName + " failed.";
-#if !defined(_WIN32) && !defined(__APPLE__)
-        // likely some linux system
-        message += "\nYou may need to reconfigure the missing locales, likely by running the \"locale-gen\" and \"dpkg-reconfigure "
-                   "locales\" commands.\n";
-#endif
-        if (initial)
-            message + "\n\nApplication will close.";
-        wxMessageBox(message, "Adartys Slicer - Switching language failed", wxOK | wxICON_ERROR);
-        if (initial)
-            std::exit(EXIT_FAILURE);
-        else
-            return false;
+        // On macOS, wxLocale::IsAvailable() may return false even though the translation .mo file exists
+        // and can be loaded. Log a warning but don't abort — let wxLocale::Init() attempt to proceed.
+        BOOST_LOG_TRIVIAL(warning) << boost::format("wxLocale reports language %1% as unavailable, attempting to load anyway.") %
+                                          language_info->CanonicalName.ToUTF8().data();
     }
 
     // Release the old locales, create new locales.
     // FIXME wxWidgets cause havoc if the current locale is deleted. We just forget it causing memory leaks for now.
     m_wxLocale.release();
     m_wxLocale = Slic3r::make_unique<wxLocale>();
-    m_wxLocale->Init(language_info->Language);
+    if (!m_wxLocale->Init(language_info->Language)) {
+        // wxLocale::Init() may fail if the C locale for this language is not installed
+        // (common on macOS where LANG=C.UTF-8). Initialize with English as the base
+        // locale, then use wxTranslations to load the correct translation catalog.
+        BOOST_LOG_TRIVIAL(warning) << boost::format("wxLocale::Init(%1%) failed, using English locale with manual translation loading.") %
+                                          language_info->CanonicalName.ToUTF8().data();
+        m_wxLocale.release();
+        m_wxLocale = Slic3r::make_unique<wxLocale>();
+        m_wxLocale->Init(wxLANGUAGE_ENGLISH);
+    }
     // Override language at the active wxTranslations class (which is stored in the active m_wxLocale)
     // to load possibly different dictionary, for example, load Czech dictionary for Slovak language.
-    wxTranslations::Get()->SetLanguage(language_dict);
+    if (wxTranslations::Get()) {
+        wxTranslations::Get()->SetLanguage(language_dict);
+    }
     m_wxLocale->AddCatalog(SLIC3R_APP_KEY);
     m_imgui->set_language(into_u8(language_info->CanonicalName));
 

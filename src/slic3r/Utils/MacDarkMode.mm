@@ -30,6 +30,21 @@ bool mac_dark_mode()
 
 }
 
+std::string mac_get_preferred_language()
+{
+    // Read the preferred language directly from macOS system preferences
+    // This is more reliable than wxLocale::GetSystemLanguage() which may
+    // be affected by the LANG environment variable.
+    NSArray *languages = [NSLocale preferredLanguages];
+    if (languages && [languages count] > 0) {
+        NSString *lang = [languages objectAtIndex:0];
+        // Convert from BCP 47 format (e.g. "de-DE") to POSIX format (e.g. "de_DE")
+        NSString *posix = [lang stringByReplacingOccurrencesOfString:@"-" withString:@"_"];
+        return std::string([posix UTF8String]);
+    }
+    return std::string();
+}
+
 double mac_max_scaling_factor()
 {
     double scaling = 1.;
