@@ -1196,6 +1196,7 @@ int CLI::run(int argc, char** argv)
         params.argv         = argv;
         params.load_configs = load_configs;
         params.extra_config = std::move(m_extra_config);
+        params.admin_mode   = m_admin_mode;
 
         std::vector<std::string> gcode_files;
         std::vector<std::string> non_gcode_files;
@@ -6133,6 +6134,17 @@ bool CLI::setup(int argc, char** argv)
     set_local_dir((path_resources / "i18n").string());
     set_sys_shapes_dir((path_resources / "shapes").string());
     set_custom_gcodes_dir((path_resources / "custom_gcodes").string());
+
+    // Check for hidden admin flag and remove from argv before CLI parsing
+    for (int i = 1; i < argc; ++i) {
+        if (std::string(argv[i]) == "--adartys-admin") {
+            m_admin_mode = true;
+            for (int j = i; j < argc - 1; ++j)
+                argv[j] = argv[j + 1];
+            --argc;
+            --i;
+        }
+    }
 
     // Parse all command line options into a DynamicConfig.
     // If any option is unsupported, print usage and abort immediately.

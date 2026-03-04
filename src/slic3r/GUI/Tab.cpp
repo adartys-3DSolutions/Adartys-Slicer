@@ -380,7 +380,7 @@ void Tab::create_preset_tab()
     m_top_sizer->Add(m_btn_search, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(SidebarProps::IconSpacing()));
     m_top_sizer->Add(m_search_item, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(SidebarProps::ContentMargin()));
 
-    if (dynamic_cast<TabPrint*>(this) == nullptr) {
+    if (dynamic_cast<TabPrint*>(this) == nullptr && wxGetApp().is_admin_mode()) {
         m_static_title = new Label(m_top_panel, Label::Body_12, _L("Advance"));
         m_static_title->Wrap(-1);
         // BBS: open this tab by select first

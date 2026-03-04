@@ -368,6 +368,10 @@ void ParamsPanel::create_layout()
         m_mode_sizer->Add(m_title_view, 0, wxALIGN_CENTER);
         m_mode_sizer->AddSpacer(FromDIP(SidebarProps::ElementSpacing()));
         m_mode_sizer->Add(m_mode_view, 0, wxALIGN_CENTER);
+        if (!wxGetApp().is_admin_mode()) {
+            m_title_view->Hide();
+            m_mode_view->Hide();
+        }
         m_mode_sizer->AddSpacer(FromDIP(
             SidebarProps::ElementSpacing() *
             6)); // ADARTYS using spacer prevents shaky mode_view when tips_arrow highlighting mode_region instead using AddStretchSpacer
@@ -516,6 +520,9 @@ void ParamsPanel::OnToggled(wxCommandEvent& event)
     if (wxID_ABOUT != event.GetId()) {
         return;
     }
+
+    if (!wxGetApp().is_admin_mode())
+        return;
 
     // this is from tab's mode switch
     bool value = dynamic_cast<SwitchButton*>(event.GetEventObject())->GetValue();

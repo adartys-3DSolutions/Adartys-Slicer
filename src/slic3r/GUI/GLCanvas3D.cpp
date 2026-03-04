@@ -1170,7 +1170,13 @@ GLCanvas3D::GLCanvas3D(wxGLCanvas* canvas, Bed3D& bed)
 
 GLCanvas3D::~GLCanvas3D()
 {
-    reset_volumes();
+    // During destruction, skip the full reset_volumes() path which calls
+    // m_selection.clear() — that triggers callbacks into Plater/canvas3D()
+    // which may already be partially destroyed, causing a use-after-free crash.
+    if (m_initialized && !m_volumes.empty()) {
+        _set_current();
+        m_volumes.clear();
+    }
 
     m_sel_plate_toolbar.del_all_item();
     m_sel_plate_toolbar.del_stats_item();

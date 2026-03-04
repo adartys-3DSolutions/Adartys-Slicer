@@ -15,15 +15,50 @@
 
 #include <boost/nowide/iostream.hpp>
 #include <boost/nowide/convert.hpp>
+#include <boost/log/trivial.hpp>
+
+#include <exception>
+#include <cstdlib>
+#include <cstdio>
 
 #if __APPLE__
 #include <signal.h>
 #endif // __APPLE__
 
+// Custom terminate handler to log the cause of std::terminate() instead of silently dying.
+// This is critical for diagnosing issues where exceptions escape noexcept/throw() functions
+// (e.g., TBB pipeline filters, background slicing thread).
+static void adartys_terminate_handler()
+{
+    // Try to log as much as possible before aborting.
+    try {
+        if (auto eptr = std::current_exception()) {
+            try {
+                std::rethrow_exception(eptr);
+            } catch (const std::exception& ex) {
+                BOOST_LOG_TRIVIAL(fatal) << "std::terminate() called with active exception: " << ex.what();
+                fprintf(stderr, "FATAL: std::terminate() called with exception: %s\n", ex.what());
+            } catch (...) {
+                BOOST_LOG_TRIVIAL(fatal) << "std::terminate() called with unknown exception type";
+                fprintf(stderr, "FATAL: std::terminate() called with unknown exception\n");
+            }
+        } else {
+            BOOST_LOG_TRIVIAL(fatal) << "std::terminate() called without an active exception";
+            fprintf(stderr, "FATAL: std::terminate() called without an active exception\n");
+        }
+    } catch (...) {
+        // If logging itself fails, at least write to stderr.
+        fprintf(stderr, "FATAL: std::terminate() called (logging failed)\n");
+    }
+    std::abort();
+}
+
 namespace Slic3r { namespace GUI {
 
 int GUI_Run(GUI_InitParams& params)
 {
+    std::set_terminate(adartys_terminate_handler);
+
 #if __APPLE__
     // On OSX, we use boost::process::spawn() to launch new instances of PrusaSlicer from another PrusaSlicer.
     // boost::process::spawn() sets SIGCHLD to SIGIGN for the child process, thus if a child PrusaSlicer spawns another

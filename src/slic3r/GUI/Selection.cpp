@@ -682,7 +682,8 @@ void Selection::clear()
 #endif
 
     // #et_FIXME fake KillFocus from sidebar
-    wxGetApp().plater()->canvas3D()->handle_sidebar_focus_event("", false);
+    if (wxGetApp().plater() != nullptr && wxGetApp().plater()->canvas3D() != nullptr)
+        wxGetApp().plater()->canvas3D()->handle_sidebar_focus_event("", false);
 }
 
 // Update the selection based on the new instance IDs.

@@ -109,6 +109,7 @@ private:
     std::vector<std::string>    m_actions;
     std::vector<std::string>    m_transforms;
     std::vector<Model>          m_models;
+    bool                        m_admin_mode { false };
 
     bool setup(int argc, char **argv);
 

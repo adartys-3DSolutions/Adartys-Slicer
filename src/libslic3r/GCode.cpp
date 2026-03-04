@@ -1515,15 +1515,19 @@ void GCode::do_export(Print* print, const char* path, GCodeProcessorResult* resu
             boost::nowide::remove(path_tmp.c_str());
             throw Slic3r::RuntimeError(std::string("G-code export to ") + path + " failed\nIs the disk full?\n");
         }
-    } catch (std::exception& /* ex */) {
+    } catch (std::exception& ex) {
         // Rethrow on any exception. std::runtime_exception and CanceledException are expected to be thrown.
         // Close and remove the file.
+        BOOST_LOG_TRIVIAL(error) << "GCode::do_export exception: " << ex.what();
         file.close();
         boost::nowide::remove(path_tmp.c_str());
         throw;
     }
     file.close();
 
+    // Check for placeholder parser failures after closing the file but still within a
+    // context where exceptions are properly caught by the background slicing process.
+    BOOST_LOG_TRIVIAL(info) << "GCode::do_export checking placeholder parser failures";
     check_placeholder_parser_failed();
 
 #if ADARTYS_CHECK_GCODE_PLACEHOLDERS
@@ -2802,8 +2806,8 @@ void GCode::process_layers(const Print&                                         
                 print.set_status(80, Slic3r::format(_(L("Generating G-code: layer %1%")), std::to_string(layer_to_print_idx)));
                 if (m_wipe_tower && layer_tools.has_wipe_tower)
                     m_wipe_tower->next_layer();
-                // BBS
-                check_placeholder_parser_failed();
+                // BBS: check_placeholder_parser_failed() moved out of TBB pipeline to do_export()
+                // to avoid exceptions inside TBB filters which can trigger std::terminate().
                 print.throw_if_canceled();
                 return this->process_layer(print, layer.second, layer_tools, &layer == &layers_to_print.back(),
                                            &print_object_instances_ordering, size_t(-1));
@@ -2905,8 +2909,8 @@ void GCode::process_layers(const Print&              print,
                                                     LayerToPrint& layer = layers_to_print[layer_to_print_idx++];
                                                     print.set_status(80, Slic3r::format(_(L("Generating G-code: layer %1%")),
                                                                                         std::to_string(layer_to_print_idx)));
-                                                    // BBS
-                                                    check_placeholder_parser_failed();
+                                                    // BBS: check_placeholder_parser_failed() moved out of TBB pipeline to do_export()
+                                                    // to avoid exceptions inside TBB filters which can trigger std::terminate().
                                                     print.throw_if_canceled();
                                                     return this->process_layer(print, {std::move(layer)},
                                                                                tool_ordering.tools_for_layer(layer.print_z()),
@@ -3043,7 +3047,7 @@ std::string GCode::placeholder_parser_process(const std::string&   name,
         }
 
         return output;
-    } catch (std::runtime_error& err) {
+    } catch (std::exception& err) {
         // Collect the names of failed template substitutions for error reporting.
         auto it = ppi.failed_templates.find(name);
         if (it == ppi.failed_templates.end())
@@ -3053,6 +3057,13 @@ std::string GCode::placeholder_parser_process(const std::string&   name,
         // Insert the macro error message into the G-code.
         return std::string("\n!!!!! Failed to process the custom G-code template ") + name + "\n" + err.what() +
                "!!!!! End of an error report for the custom G-code template " + name + "\n\n";
+    } catch (...) {
+        // Catch any non-standard exceptions to prevent crashes.
+        auto it = ppi.failed_templates.find(name);
+        if (it == ppi.failed_templates.end())
+            ppi.failed_templates.insert(it, std::make_pair(name, std::string("Unknown error")));
+        return std::string("\n!!!!! Failed to process the custom G-code template ") + name +
+               "\nUnknown error\n!!!!! End of an error report for the custom G-code template " + name + "\n\n";
     }
 }
 

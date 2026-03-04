@@ -2283,7 +2283,19 @@ static const client::macro_processor g_macro_processor_instance;
 static std::string process_macro(const std::string& templ, client::MyContext& context)
 {
     std::string output;
-    phrase_parse(templ.begin(), templ.end(), g_macro_processor_instance(&context), client::skipper{}, output);
+    try {
+        phrase_parse(templ.begin(), templ.end(), g_macro_processor_instance(&context), client::skipper{}, output);
+    } catch (const qi::expectation_failure<std::string::const_iterator>& ex) {
+        // Convert expectation_failure (which contains iterators that may become dangling
+        // when transported across threads via std::exception_ptr) into a safe PlaceholderParserError.
+        std::string msg = "Parsing error";
+        if (!ex.what_.tag.empty() && ex.what_.tag.front() == '*')
+            msg += ": " + ex.what_.tag.substr(1);
+        else if (!ex.what_.tag.empty())
+            msg += ": unexpected '" + ex.what_.tag + "'";
+        msg += '\n';
+        throw Slic3r::PlaceholderParserError(msg);
+    }
     if (!context.error_message.empty()) {
         if (context.error_message.back() != '\n' && context.error_message.back() != '\r')
             context.error_message += '\n';

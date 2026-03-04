@@ -767,7 +767,9 @@ static void generic_exception_handle()
         wxLogError(format_wxstr(_L("AdartysSlicer got an unhandled exception: %1%"), ex.what()));
         BOOST_LOG_TRIVIAL(error) << boost::format("Uncaught exception: %1%") % ex.what();
         flush_logs();
-        throw;
+        // Do not rethrow — if called from a noexcept/throw() context (e.g. the background
+        // slicing thread's thread_proc_safe), rethrowing triggers std::terminate() and
+        // silently kills the application without any crash report.
     }
     //#endif
 }
@@ -2534,6 +2536,12 @@ please delete installed plugin and try again!");
 
     // Let the libslic3r know the callback, which will translate messages on demand.
     Slic3r::I18N::set_translate_callback(libslic3r_translate_callback);
+
+    // Read admin mode from CLI params; force simple mode for non-admin users
+    m_admin_mode = init_params && init_params->admin_mode;
+    if (!m_admin_mode && app_config->get("user_mode") != "simple") {
+        app_config->set("user_mode", "simple");
+    }
 
     BOOST_LOG_TRIVIAL(info) << "create the main window";
     mainframe = new MainFrame();

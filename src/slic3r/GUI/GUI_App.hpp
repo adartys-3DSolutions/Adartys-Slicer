@@ -608,6 +608,9 @@ public:
 
     // Parameters extracted from the command line to be passed to GUI after initialization.
     GUI_InitParams* init_params { nullptr };
+    bool            m_admin_mode { false };
+
+    bool            is_admin_mode() const { return m_admin_mode; }
 
     AppConfig*      app_config{ nullptr };
     PresetBundle*   preset_bundle{ nullptr };

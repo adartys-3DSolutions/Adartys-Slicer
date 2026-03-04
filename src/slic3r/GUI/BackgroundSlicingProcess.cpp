@@ -446,11 +446,13 @@ void BackgroundSlicingProcess::call_process(std::exception_ptr& ex) throw()
     } catch (CanceledException& /* ex */) {
         // Canceled, this is all right.
         assert(m_print->canceled());
-        ex = std::current_exception();
-        BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":got cancelled exception" << std::endl;
+        try { ex = std::current_exception(); } catch (...) {}
+        try { BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":got cancelled exception" << std::endl; } catch (...) {}
     } catch (...) {
-        ex = std::current_exception();
-        BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":got other exception" << std::endl;
+        // Wrap all operations in try-catch to prevent any exception from escaping this
+        // noexcept/throw() function, which would trigger std::terminate().
+        try { ex = std::current_exception(); } catch (...) {}
+        try { BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":got other exception" << std::endl; } catch (...) {}
     }
 }
 
