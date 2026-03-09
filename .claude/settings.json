@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"read_cli\" /Users/littwin/Documents/Projekte/Customers/Smolsys/Adartys-Slicer/src/libslic3r/*.cpp)",
+      "Bash(hdiutil attach /Users/littwin/Documents/Projekte/Customers/Smolsys/Adartys-Slicer/AdartysSlicer-20260306.dmg -nobrowse)",
+      "Bash(/usr/libexec/PlistBuddy -c \"Print CFBundleIdentifier\" \"/Volumes/AdartysSlicer 2/AdartysSlicer.app/Contents/Info.plist\")"
+    ]
+  }
+}

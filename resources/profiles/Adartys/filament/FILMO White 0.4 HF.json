@@ -29,7 +29,7 @@
         "30"
     ],
     "filament_settings_id": [
-        "FILMO White Düse 0.4 HF"
+        "FILMO White 0.4 HF"
     ],
     "filament_wipe": [
         "0"
@@ -43,7 +43,7 @@
     "from": "system",
     "inherits": "FILMO White",
     "instantiation": "true",
-    "name": "FILMO White Düse 0.4 HF",
+    "name": "FILMO White 0.4 HF",
     "nozzle_temperature": [
         "210"
     ],

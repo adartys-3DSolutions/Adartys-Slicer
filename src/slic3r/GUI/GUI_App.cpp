@@ -2879,7 +2879,11 @@ unsigned GUI_App::get_colour_approx_luma(const wxColour& colour)
 bool GUI_App::dark_mode()
 {
 #ifdef SUPPORT_DARK_MODE
+#ifdef __APPLE__
+    return true;
+#else
     return wxGetApp().app_config->get("dark_color_mode") == "1";
+#endif
 #else
     // BBS disable DarkUI mode
     return false;

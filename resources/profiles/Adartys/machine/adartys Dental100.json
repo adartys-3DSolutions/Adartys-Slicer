@@ -3,7 +3,7 @@
     "name": "Adartys Dental100",
     "nozzle_diameter": "0.4",
     "bed_model": "",
-    "bed_texture": "",
+    "bed_texture": "fulllogo_transparent.png",
     "family": "Adartys",
     "machine_tech": "FFF",
     "default_materials": "FILMO White"
