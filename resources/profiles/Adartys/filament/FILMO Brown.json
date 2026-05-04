@@ -43,10 +43,6 @@
     "cool_plate_temp_initial_layer": [
         "35"
     ],
-    "default_filament_colour": [
-        "#FFFFFF"
-    ],
-
     "during_print_exhaust_fan_speed": [
         "70"
     ],
@@ -139,9 +135,6 @@
     ],
     "filament_retraction_speed": [
         "nil"
-    ],
-    "filament_settings_id": [
-        "FILMO White"
     ],
     "filament_shrink": [
         "100%"
@@ -254,10 +247,6 @@
         "45"
     ],
 
-
-
-
- 
     "enable_pressure_advance": [
         "1"
     ],
@@ -271,37 +260,47 @@
         "2"
     ],
     "instantiation": "true",
-    "name": "FILMO White",
+    "version": "2.3.1.13"
+
+
+
+
+
+    "default_filament_colour": [
+        "#EEC48B"
+    ],
     "dont_slow_down_outer_wall": [
         "0"
     ],
     "fan_cooling_layer_time": [
-        "2"
+        "5"
     ],
     "fan_max_speed": [
-        "40"
+        "100"
     ],
     "fan_min_speed": [
-        "25"
+        "60"
     ],
     "filament_flow_ratio": [
-        "0.75"
+        "0.89"
     ],
     "filament_retraction_length": [
         "nil"
     ],
-
+    "filament_settings_id": [
+        "FILMO Brown"
+    ],
+    "name": "FILMO Brown",
     "nozzle_temperature": [
         "200"
     ],
     "pressure_advance": [
-        "0.06"
+        "0.08"
     ],
     "slow_down_layer_time": [
         "1"
     ],
     "slow_down_min_speed": [
-        "20"
-    ],
-    "version": "2.3.1.13"
+        "15"
+    ]
 }
