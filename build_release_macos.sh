@@ -175,6 +175,9 @@ function build_slicer() {
                     -G "${SLICER_CMAKE_GENERATOR}" \
                     -DBBL_RELEASE_TO_PUBLIC=1 \
                     -DADARTYS_TOOLS=ON \
+                    -DCMAKE_IGNORE_PREFIX_PATH="/opt/homebrew;/opt/local" \
+                    -DLIBLZMA_INCLUDE_DIR=/opt/homebrew/opt/xz/include \
+                    -DLIBLZMA_LIBRARY=/opt/homebrew/opt/xz/lib/liblzma.dylib \
                     ${ADARTYS_UPDATER_SIG_KEY:+-DADARTYS_UPDATER_SIG_KEY="$ADARTYS_UPDATER_SIG_KEY"} \
                     -DCMAKE_PREFIX_PATH="$DEPS/usr/local" \
                     -DCMAKE_INSTALL_PREFIX="$PWD/AdartysSlicer" \

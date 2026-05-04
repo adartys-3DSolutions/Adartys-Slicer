@@ -25,28 +25,12 @@
             "sub_path": "process/fdm_process_common.json"
         },
         {
-            "name": "adartys FILMO light brown 0.25 fine",
-            "sub_path": "process/adartys FILMO light brown 0.25 fine.json"
+            "name": "adartys FILMO 0.4",
+            "sub_path": "process/adartys FILMO 0.4.json"
         },
         {
-            "name": "adartys FILMO white 0.25 fine",
-            "sub_path": "process/adartys FILMO white 0.25 fine.json"
-        },
-        {
-            "name": "adartys FILMO white 0.4 fine",
-            "sub_path": "process/adartys FILMO white 0.4 fine.json"
-        },
-        {
-            "name": "adartys FILMO white 0.4 speed",
-            "sub_path": "process/adartys FILMO white 0.4 speed.json"
-        },
-        {
-            "name": "adartys FILPRO 0.25 Noozle",
-            "sub_path": "process/adartys FILPRO 0.25 Noozle.json"
-        },
-        {
-            "name": "adartys FILPRO 0.4 Noozle",
-            "sub_path": "process/adartys FILPRO 0.4 Noozle.json"
+            "name": "adartys FILPRO 0.4",
+            "sub_path": "process/adartys FILPRO 0.4.json"
         },
         {
             "name": "IGUS Gear",
@@ -67,20 +51,8 @@
             "sub_path": "filament/FILMO White.json"
         },
         {
-            "name": "FILMO White 0.25",
-            "sub_path": "filament/FILMO White 0.25.json"
-        },
-        {
-            "name": "FILMO White 0.4",
-            "sub_path": "filament/FILMO White 0.4.json"
-        },
-        {
-            "name": "FILMO White 0.4 HF",
-            "sub_path": "filament/FILMO White 0.4 HF.json"
-        },
-        {
-            "name": "FILMO light brown 0.25",
-            "sub_path": "filament/FILMO light brown 0.25.json"
+            "name": "FILMO Brown",
+            "sub_path": "filament/FILMO Brown.json"
         },
         {
             "name": "FILPRO - Rosa",

@@ -10,7 +10,7 @@
   "printer_settings_id": "Adartys Dental100 - 0.4 nozzle",
   "printer_structure": "undefine",
   "printer_notes": "",
-  "default_print_profile": "",
+  "default_print_profile": "adartys FILMO 0.4",
   "default_filament_profile": ["FILMO White"],
   "default_bed_type": "",
   "adaptive_bed_mesh_margin": "0",
