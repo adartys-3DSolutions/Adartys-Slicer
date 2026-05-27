@@ -33,5 +33,5 @@
   "reduce_fan_stop_start_freq": ["1"],
   "slow_down_for_layer_cooling": ["1"],
   "slow_down_layer_time": ["5"],
-  "version": "2.3.1.15"
+  "version": "2.3.1.17"
 }

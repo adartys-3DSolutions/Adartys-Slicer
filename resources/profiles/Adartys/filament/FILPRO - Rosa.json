@@ -36,5 +36,5 @@
   "slow_down_for_layer_cooling": ["1"],
   "slow_down_layer_time": ["10"],
   "slow_down_min_speed": ["10"],
-  "version": "2.3.1.15"
+  "version": "2.3.1.17"
 }

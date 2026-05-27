@@ -69,7 +69,7 @@
     "travel_acceleration": "8000",
     "travel_jerk": "5",
     "travel_speed": "450",
-    "version": "2.3.1.10",
+    "version": "2.3.1.17",
     "wall_loops": "4",
     "xy_hole_compensation": "0.15"
 }

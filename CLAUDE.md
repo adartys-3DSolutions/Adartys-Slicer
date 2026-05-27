@@ -9,6 +9,7 @@ AdartysSlicer is an open-source 3D slicer application forked from Bambu Studio, 
 ## Build Commands
 
 ### Building on Windows
+
 ```bash
 # Build everything
 build_release_vs2022.bat
@@ -30,6 +31,7 @@ build_and_package.bat debuginfo
 ```
 
 ### Packaging and Code Signing (Windows)
+
 ```bash
 # Create signed installer after build (automatic build + package + sign)
 build_and_package.bat
@@ -45,6 +47,7 @@ Installer signing requires either `build_and_package.bat` or manual steps after 
 See [SIGNING.md](SIGNING.md) for detailed code signing documentation.
 
 ### Building on macOS
+
 ```bash
 # Build everything (dependencies and slicer)
 CMAKE_IGNORE_PATH="/usr/X11R6:/opt/X11" ./build_release_macos.sh
@@ -134,6 +137,7 @@ Run individual test suites:
 ## Architecture
 
 ### Core Libraries
+
 - **libslic3r/**: Core slicing engine and algorithms (platform-independent)
   - Main slicing logic, geometry processing, G-code generation
   - Key classes: Print, PrintObject, Layer, GCode, Config
