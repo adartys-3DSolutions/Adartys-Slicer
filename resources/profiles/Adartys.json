@@ -1,6 +1,6 @@
 {
     "name": "Adartys",
-    "version": "02.03.01.18",
+    "version": "02.03.01.19",
     "force_update": "0",
     "description": "Adartys configurations",
     "machine_model_list": [
@@ -31,11 +31,8 @@
         {
             "name": "adartys FILPRO 0.4",
             "sub_path": "process/adartys FILPRO 0.4.json"
-        },
-        {
-            "name": "IGUS Gear",
-            "sub_path": "process/IGUS Gear.json"
         }
+
     ],
     "filament_list": [
         {
