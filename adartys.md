@@ -22,6 +22,8 @@ rm -rf /Users/littwin/Documents/Projekte/Customers/Smolsys/Adartys-Slicer/deps/b
 ./build_release_macos.sh -s
 open /Users/littwin/Documents/Projekte/Customers/Smolsys/Adartys-Slicer/build/arm64/AdartysSlicer/AdartysSlicer.app
 
+open /Users/CrazyKite/Codes/Adartys-Slicer/build/arm64/AdartysSlicer/AdartysSlicer.app
+
 Notarize app on MacOS:
 ./notarize_adartys.sh
 

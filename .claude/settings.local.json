@@ -21,7 +21,9 @@
       "Bash(cmake --build:*)",
       "Bash(cmd.exe /c \"dir deps 2>nul\")",
       "Bash(cmd.exe /c \"dir /s /b deps\\\\build\\\\AdartysSlicer_dep\\\\usr\\\\local\\\\lib 2>nul | findstr /i ssl\")",
-      "Bash(cmd.exe /c \"dir /s /b deps\\\\build\\\\AdartysSlicer_dep\\\\usr\\\\local 2>nul | findstr /i openssl\")"
+      "Bash(cmd.exe /c \"dir /s /b deps\\\\build\\\\AdartysSlicer_dep\\\\usr\\\\local 2>nul | findstr /i openssl\")",
+      "Bash(find /Users/CrazyKite/Codes/Leadership-Manager -name \"replit.md\" -o -name \"README.md\" | head -5)",
+      "Read(//Users/CrazyKite/Codes/Leadership-Manager/**)"
     ],
     "deny": [],
     "ask": []

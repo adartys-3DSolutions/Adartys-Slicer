@@ -1,37 +1,44 @@
 {
+  "version": "2.3.1.18",
   "type": "filament",
   "filament_id": "AD01fpt0",
   "compatible_printers": ["Adartys Dental100 - 0.4 nozzle"],
   "default_filament_colour": ["#D0CB85"],
-  "fan_cooling_layer_time": ["30"],
-  "filament_cost": ["280"],
-  "filament_density": ["1.29"],
   "filament_settings_id": ["FILPRO - tooth"],
   "filament_type": ["PETG"],
   "from": "system",
-  "inherits": "FILMO White",
+  "inherits": "fdm_filament_petg",
   "instantiation": "true",
   "name": "FILPRO - tooth",
-  "nozzle_temperature": ["285"],
-  "nozzle_temperature_range_high": ["300"],
-  "nozzle_temperature_range_low": ["260"],
-  "slow_down_min_speed": ["10"],
-  "temperature_vitrification": ["90"],
+
+  "filament_flow_ratio": ["1.07"],
+
   "enable_pressure_advance": ["1"],
-  "fan_max_speed": ["10"],
-  "fan_min_speed": ["10"],
-  "filament_flow_ratio": ["1.15"],
-  "filament_retract_before_wipe": ["100%"],
-  "filament_retract_lift_below": ["300"],
-  "filament_wipe": ["1"],
-  "filament_wipe_distance": ["2"],
-  "filament_z_hop": ["1"],
-  "hot_plate_temp": ["55"],
-  "hot_plate_temp_initial_layer": ["55"],
-  "nozzle_temperature_initial_layer": ["280"],
   "pressure_advance": ["0.05"],
-  "reduce_fan_stop_start_freq": ["1"],
-  "slow_down_for_layer_cooling": ["1"],
-  "slow_down_layer_time": ["5"],
-  "version": "2.3.1.17"
+
+  "nozzle_temperature": ["280"],
+  "nozzle_temperature_initial_layer": ["300"],
+
+  "hot_plate_temp_initial_layer": ["80"],
+  "hot_plate_temp": ["80"],
+
+  "fan_cooling_layer_time": ["30"],
+  "slow_down_layer_time": ["10"],
+  "fan_min_speed": ["30"],
+  "fan_max_speed": ["30"],
+
+  "filament_wipe": ["1"],
+  "filament_retract_before_wipe": ["100%"],
+  "filament_wipe_distance": ["2"],
+
+  "filament_retract_lift_below": ["300"],
+  "filament_z_hop": ["0.2"],
+  "filament_z_hop_types": ["Auto Lift"],
+
+
+  "is_custom_defined": "0",
+  "overhang_fan_speed": ["20"],
+  "slow_down_for_layer_cooling": ["0"],
+
+  "slow_down_min_speed": ["10"]
 }

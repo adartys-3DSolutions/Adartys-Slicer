@@ -24,7 +24,7 @@
   "before_layer_change_gcode": ";BEFORE_LAYER_CHANGE\nG92 E0\n;[layer_z]\n\n",
   "best_object_pos": "0,0",
   "change_extrusion_role_gcode": "",
-  "change_filament_gcode": "; Change position before switching\n{if has_wipe_tower}\n G1 Z{layer_z+1} X{wipe_tower_x[0]} Y{wipe_tower_y[0]} F27000\n{endif}\n",
+  "change_filament_gcode": "; Change position before switching\n{if has_wipe_tower}\nG1 Z{layer_z+1} F12000\nG1 X{wipe_tower_x[0]-30} Y{wipe_tower_y[0]} F27000\n{endif}\n",
   "cooling_tube_length": "5",
   "cooling_tube_retraction": "91.5",
   "deretraction_speed": ["40", "40"],
